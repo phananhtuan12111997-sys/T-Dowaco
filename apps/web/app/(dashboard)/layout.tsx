@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Header } from "@/components/header";
 import { SidebarCollapsible } from "@/components/sidebar-collapsible";
+import { SidebarItem } from "@/components/sidebar-item";
 import { createClient } from "@/utils/supabase/server";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -58,7 +59,7 @@ export default async function DashboardLayout({
             <SidebarItem href="/meetings" icon={<Calendar size={18} />} text="Quản lý Lịch họp" />
             <SidebarItem href="/payslips" icon={<Banknote size={18} />} text="Quản lý Phiếu lương" />
             <SidebarItem href="/vehicles" icon={<Car size={18} />} text="Quản lý Xin xe" />
-            <SidebarItem href="/news" icon={<Newspaper size={18} />} text="Bảng tin nội bộ" />
+            <SidebarItem href="/news" icon={<Newspaper size={18} />} text="Bảng tin Nội bộ" />
             <SidebarItem href="/tasks" icon={<CheckSquare size={18} />} text="Quản lý Công việc" />
             {profile?.is_admin && (
               <SidebarItem href="/hr" icon={<Users size={18} />} text="Quản lý Nhân sự" />
@@ -75,16 +76,5 @@ export default async function DashboardLayout({
         </main>
       </div>
     </div>
-  );
-}
-
-function SidebarItem({ href, icon, text }: { href: string; icon: React.ReactNode; text: string }) {
-  return (
-    <li>
-      <Link href={href} className="flex items-center gap-3 px-6 py-3 text-blue-100 hover:bg-blue-800/40 hover:text-white transition-colors">
-        {icon}
-        <span className="text-sm font-medium">{text}</span>
-      </Link>
-    </li>
   );
 }
