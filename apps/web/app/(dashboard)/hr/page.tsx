@@ -3,7 +3,6 @@ import { redirect } from 'next/navigation'
 import { CreateUserButton } from './create-user-button'
 import {
   Table,
-  Body,
   TableCell,
   TableHead,
   TableHeader,
