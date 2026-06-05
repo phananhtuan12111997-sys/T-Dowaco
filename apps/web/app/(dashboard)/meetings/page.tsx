@@ -113,11 +113,11 @@ export default async function MeetingsPage({
               {format(currentDate, 'MMMM yyyy')}
             </div>
             <div className="flex rounded-md overflow-hidden border border-blue-400">
-              <Button variant="ghost" size="sm" className={`h-8 rounded-none ${view === 'calendar' ? 'bg-blue-500 text-white hover:bg-blue-600 hover:text-white' : 'text-blue-600 hover:bg-blue-50'}`} asChild>
+              <Button variant="ghost" size="sm" className="h-8 rounded-none bg-blue-500 text-white hover:bg-blue-600 hover:text-white" asChild>
                 <Link href={`?view=calendar&date=${format(currentDate, 'yyyy-MM-dd')}`}>month</Link>
               </Button>
               <Button variant="ghost" size="sm" className="h-8 rounded-none text-blue-600 hover:bg-blue-50 border-l border-blue-400" disabled>week</Button>
-              <Button variant="ghost" size="sm" className={`h-8 rounded-none border-l border-blue-400 ${view === 'table' ? 'bg-blue-500 text-white hover:bg-blue-600 hover:text-white' : 'text-blue-600 hover:bg-blue-50'}`} asChild>
+              <Button variant="ghost" size="sm" className="h-8 rounded-none border-l border-blue-400 text-blue-600 hover:bg-blue-50" asChild>
                 <Link href={`?view=table&date=${format(currentDate, 'yyyy-MM-dd')}`}>list</Link>
               </Button>
             </div>
