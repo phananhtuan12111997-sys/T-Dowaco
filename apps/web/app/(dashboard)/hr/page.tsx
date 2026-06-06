@@ -34,7 +34,7 @@ export default async function HRPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Quản lý Nhân sự</h1>
           <p className="text-slate-500">Quản lý tài khoản, phòng ban và chức vụ của nhân viên</p>
@@ -72,7 +72,7 @@ export default async function HRPage() {
                   </TableCell>
                   <TableCell>
                     {u.is_admin ? (
-                      <Badge variant="default" className="bg-blue-600 hover:bg-blue-700">Admin</Badge>
+                      <Badge variant="default" className="bg-blue-600 hover:bg-blue-700 w-full md:w-auto">Admin</Badge>
                     ) : u.force_password_change ? (
                       <Badge variant="outline" className="text-orange-600 border-orange-200 bg-orange-50">Chờ đổi mật khẩu</Badge>
                     ) : (

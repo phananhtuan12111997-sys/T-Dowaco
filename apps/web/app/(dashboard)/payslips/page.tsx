@@ -60,7 +60,7 @@ export default async function PayslipsPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
             <span>DOFFICE</span>

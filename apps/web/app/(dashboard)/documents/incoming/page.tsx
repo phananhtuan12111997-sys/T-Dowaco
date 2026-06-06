@@ -23,17 +23,17 @@ export default async function IncomingDocumentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
             <span>T-Dowaco</span>
             <span>→</span>
             <span>Công văn đến</span>
           </div>
-          <h1 className="text-2xl font-bold text-[#1a56db]">Danh sách Công văn đến</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-[#1a56db]">Danh sách Công văn đến</h1>
         </div>
         
-        <Button asChild className="bg-blue-600 hover:bg-blue-700">
+        <Button asChild className="bg-blue-600 hover:bg-blue-700 w-full md:w-auto">
           <Link href="/documents/create">
             <Plus className="mr-2 h-4 w-4" /> Soạn công văn mới
           </Link>
@@ -41,12 +41,12 @@ export default async function IncomingDocumentsPage() {
       </div>
 
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
-        <div className="p-4 border-b border-slate-200 flex flex-wrap gap-4 items-center justify-between">
+        <div className="p-4 border-b border-slate-200 flex flex-col xl:flex-row gap-4 items-start xl:items-center justify-between">
           <h2 className="font-semibold text-[#1a56db]">Hộp thư đến</h2>
           
-          <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full xl:w-auto">
             <Select defaultValue="all">
-              <SelectTrigger className="w-[150px]">
+              <SelectTrigger className="w-full sm:w-[150px]">
                 <SelectValue placeholder="Loại công văn" />
               </SelectTrigger>
               <SelectContent>
@@ -58,7 +58,7 @@ export default async function IncomingDocumentsPage() {
             </Select>
 
             <Select defaultValue="all">
-              <SelectTrigger className="w-[150px]">
+              <SelectTrigger className="w-full sm:w-[150px]">
                 <SelectValue placeholder="Độ ưu tiên" />
               </SelectTrigger>
               <SelectContent>
@@ -73,7 +73,7 @@ export default async function IncomingDocumentsPage() {
               <Input
                 type="search"
                 placeholder="Tìm số ký hiệu, trích yếu..."
-                className="pl-9"
+                className="pl-9 w-full"
               />
             </div>
           </div>

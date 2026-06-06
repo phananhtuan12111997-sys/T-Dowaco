@@ -14,7 +14,7 @@ export default async function SearchDocumentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
             <span>T-Dowaco</span>
@@ -26,7 +26,7 @@ export default async function SearchDocumentsPage() {
       </div>
 
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
-        <div className="p-4 border-b border-slate-200 flex flex-wrap gap-4 items-center justify-between">
+        <div className="p-4 border-b border-slate-200 flex flex-col xl:flex-row gap-4 items-start xl:items-center justify-between">
           <h2 className="font-semibold text-slate-800">Danh sách công văn cũ</h2>
           
           <div className="relative w-full sm:w-[300px]">

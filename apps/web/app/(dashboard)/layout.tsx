@@ -50,9 +50,9 @@ export default async function DashboardLayout({
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 lg:ml-64 flex flex-col w-full min-h-screen">
+      <div className="flex-1 lg:ml-64 flex flex-col w-full min-h-screen max-w-full">
         <Header profile={profile} />
-        <main className="flex-1 p-8">
+        <main className="flex-1 p-4 md:p-8 overflow-x-hidden w-full">
           {children}
         </main>
       </div>

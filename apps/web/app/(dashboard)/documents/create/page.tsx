@@ -122,7 +122,7 @@ export default async function CreateDocumentPage() {
               <Button type="button" variant="outline" asChild>
                 <Link href="/documents/incoming">Hủy</Link>
               </Button>
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700">Lưu công văn</Button>
+              <Button type="submit" className="bg-blue-600 hover:bg-blue-700 w-full md:w-auto">Lưu công văn</Button>
             </div>
           </form>
         </CardContent>

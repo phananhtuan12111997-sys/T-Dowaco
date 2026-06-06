@@ -14,7 +14,7 @@ export default async function NewsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
             <span>T-Dowaco</span>
@@ -24,7 +24,7 @@ export default async function NewsPage() {
           <h1 className="text-2xl font-bold text-[#1a56db]">Bản tin công ty</h1>
         </div>
         
-        <Button asChild className="bg-blue-600 hover:bg-blue-700">
+        <Button asChild className="bg-blue-600 hover:bg-blue-700 w-full md:w-auto">
           <Link href="/news/create">
             <Plus className="mr-2 h-4 w-4" /> Đăng tin mới
           </Link>
@@ -32,7 +32,7 @@ export default async function NewsPage() {
       </div>
 
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
-        <div className="p-4 border-b border-slate-200 flex flex-wrap gap-4 items-center justify-between">
+        <div className="p-4 border-b border-slate-200 flex flex-col xl:flex-row gap-4 items-start xl:items-center justify-between">
           <h2 className="font-semibold text-slate-800">Thông tin nội bộ và thông báo</h2>
           
           <div className="relative w-full sm:w-[300px]">
