@@ -38,7 +38,7 @@ export function SidebarCollapsible({ icon, text, items, basePath }: SidebarColla
       {isOpen && (
         <ul className="bg-[#1748b8] py-2">
           {items.map((item) => {
-            const isActive = pathname === item.href
+            const isActive = pathname === item.href || (item.href === '/documents/incoming' && pathname === '/documents/create')
             return (
               <li key={item.href}>
                 <Link
