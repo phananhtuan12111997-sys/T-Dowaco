@@ -12,7 +12,7 @@ export default async function NewsPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('department')
+    .select('department, is_admin')
     .eq('id', user.id)
     .single()
 

@@ -72,7 +72,8 @@ export async function createVehicleRequest(formData: FormData) {
   }
 
   if (companions && companions.length > 0) {
-    companions.forEach((compId: string) => {
+    companions.forEach((comp) => {
+      const compId = comp.toString();
       notificationsToInsert.push({
         user_id: compId,
         document_id: data.id,

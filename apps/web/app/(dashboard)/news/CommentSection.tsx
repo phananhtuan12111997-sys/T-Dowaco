@@ -14,7 +14,7 @@ import { useEffect } from 'react'
 function MentionDropdown({ text, onSelect, users }: { text: string, onSelect: (val: string) => void, users: any[] }) {
   const match = text.match(/@([a-zA-Z0-9À-ỹ\s_]*)$/)
   if (!match) return null
-  const query = match[1].toLowerCase()
+  const query = (match[1] || "").toLowerCase()
   const filtered = users.filter(u => u.full_name.toLowerCase().includes(query)).slice(0, 5)
   
   if (filtered.length === 0) return null

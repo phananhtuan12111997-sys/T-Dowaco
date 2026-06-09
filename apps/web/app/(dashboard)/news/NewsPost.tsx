@@ -248,7 +248,7 @@ export function NewsPost({ post, currentUserId, currentUserAvatar, isITAdmin }: 
               newsId={post.id} 
               currentUserId={currentUserId} 
               currentUserAvatar={currentUserAvatar}
-              initialComments={post.comments || []} 
+              comments={post.comments || []} 
               isITAdmin={isITAdmin}
             />
           </div>

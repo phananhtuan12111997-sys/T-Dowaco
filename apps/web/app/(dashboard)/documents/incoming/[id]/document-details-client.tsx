@@ -206,7 +206,7 @@ export function DocumentDetailsClient({ document, recipients, users, currentUser
                               <div className="rounded-lg overflow-hidden border border-slate-200 shadow-sm bg-white animate-in fade-in zoom-in-95 duration-200 mt-1 mb-2">
                                 <div className="bg-slate-50 flex items-center justify-between p-3 border-b border-slate-200">
                                   <div className="flex items-center gap-2 font-semibold text-sm text-slate-800">
-                                    <Eye className="w-4 h-4 text-slate-500" /> Xem trước: {previewFile.name}
+                                    <Eye className="w-4 h-4 text-slate-500" /> Xem trước: {previewFile?.name}
                                   </div>
                                   <Button 
                                     variant="ghost" 
@@ -220,40 +220,40 @@ export function DocumentDetailsClient({ document, recipients, users, currentUser
                                     <X className="w-4 h-4" />
                                   </Button>
                                 </div>
-                                <div className="w-full h-[600px] bg-slate-100 relative">
-                                  {previewFile.url.toLowerCase().endsWith('.pdf') ? (
-                                    <iframe 
-                                      src={`${previewFile.url}#toolbar=0`} 
-                                      className="w-full h-full border-0 absolute inset-0" 
-                                    />
-                                  ) : previewFile.url.toLowerCase().match(/\.(docx|doc|xlsx|xls|pptx|ppt)$/i) ? (
-                                    <iframe 
-                                      src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(previewFile.url)}`}
-                                      className="w-full h-full border-0 absolute inset-0"
-                                      title="Office Preview"
-                                    />
-                                  ) : previewFile.url.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                                    <div className="w-full h-full flex items-center justify-center p-4">
-                                      <img 
-                                        src={previewFile.url} 
-                                        alt={previewFile.name} 
-                                        className="max-w-full max-h-full object-contain" 
+                                  <div className="w-full h-[600px] bg-slate-100 relative">
+                                    {previewFile?.url?.toLowerCase().endsWith('.pdf') ? (
+                                      <iframe 
+                                        src={`${previewFile?.url}#toolbar=0`} 
+                                        className="w-full h-full border-0 absolute inset-0" 
                                       />
-                                    </div>
-                                  ) : (
-                                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-500">
-                                      <FileText className="w-12 h-12 mb-3 text-slate-300" />
-                                      <p className="font-medium text-slate-600">Không thể xem trước tệp này</p>
-                                      <p className="text-sm text-slate-400 mt-1">Vui lòng tải xuống để xem nội dung</p>
-                                      <Button variant="outline" className="mt-4 bg-white" asChild>
-                                        <a href={previewFile.url} download={previewFile.name} target="_blank" rel="noreferrer">
-                                          <Download className="w-4 h-4 mr-2" />
-                                          Tải xuống tệp
-                                        </a>
-                                      </Button>
-                                    </div>
-                                  )}
-                                </div>
+                                    ) : previewFile?.url?.toLowerCase().match(/\.(docx|doc|xlsx|xls|pptx|ppt)$/i) ? (
+                                      <iframe 
+                                        src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(previewFile?.url || '')}`}
+                                        className="w-full h-full border-0 absolute inset-0"
+                                        title="Office Preview"
+                                      />
+                                    ) : previewFile?.url?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                                      <div className="w-full h-full flex items-center justify-center p-4">
+                                        <img 
+                                          src={previewFile?.url} 
+                                          alt={previewFile?.name} 
+                                          className="max-w-full max-h-full object-contain" 
+                                        />
+                                      </div>
+                                    ) : (
+                                      <div className="w-full h-full flex flex-col items-center justify-center text-slate-500">
+                                        <FileText className="w-12 h-12 mb-3 text-slate-300" />
+                                        <p className="font-medium text-slate-600">Không thể xem trước tệp này</p>
+                                        <p className="text-sm text-slate-400 mt-1">Vui lòng tải xuống để xem nội dung</p>
+                                        <Button variant="outline" className="mt-4 bg-white" asChild>
+                                          <a href={previewFile?.url} download={previewFile?.name} target="_blank" rel="noreferrer">
+                                            <Download className="w-4 h-4 mr-2" />
+                                            Tải xuống tệp
+                                          </a>
+                                        </Button>
+                                      </div>
+                                    )}
+                                  </div>
                               </div>
                             )}
                           </div>
