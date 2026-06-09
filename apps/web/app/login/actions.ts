@@ -11,7 +11,7 @@ export async function login(formData: FormData) {
   const password = formData.get('password') as string
 
   // We append a fake domain to use Supabase's email auth with a custom username
-  const email = username.includes('@') ? username : `${username}@t-dowaco.vn`
+  const email = username.includes('@') ? username : `${username}@tdowaco.vn`
 
   const { error } = await supabase.auth.signInWithPassword({
     email,

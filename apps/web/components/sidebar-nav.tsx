@@ -17,15 +17,14 @@ export function SidebarNav({ isAdmin }: SidebarNavProps) {
         basePath="/documents"
         items={[
           { href: "/documents/incoming", text: "Công văn đến" },
-          { href: "/documents/sent", text: "Công văn đã gửi" },
-          { href: "/documents/search", text: "Tra cứu Công văn cũ" }
+          { href: "/documents/sent", text: "Công văn đã gửi" }
         ]}
       />
       <SidebarItem href="/meetings" icon={<Calendar size={18} />} text="Quản lý Lịch họp" />
       <SidebarItem href="/payslips" icon={<Banknote size={18} />} text="Quản lý Phiếu lương" />
       <SidebarItem href="/vehicles" icon={<Car size={18} />} text="Quản lý Xin xe" />
-      <SidebarItem href="/news" icon={<Newspaper size={18} />} text="Bảng tin Nội bộ" />
       <SidebarItem href="/tasks" icon={<CheckSquare size={18} />} text="Quản lý Công việc" />
+      <SidebarItem href="/news" icon={<Newspaper size={18} />} text="Bảng tin Nội bộ" />
       {isAdmin && (
         <SidebarItem href="/hr" icon={<Users size={18} />} text="Quản lý Nhân sự" />
       )}

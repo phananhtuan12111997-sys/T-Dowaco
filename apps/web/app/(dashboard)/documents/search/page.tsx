@@ -4,10 +4,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 export default async function SearchDocumentsPage() {
-  const supabase = await createClient()
+  const { createClient: createSupabaseClient } = await import('@supabase/supabase-js')
+  const supabaseAdmin = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
   
   // Lấy dữ liệu công văn cũ (trong thực tế có thể lọc theo thời gian hoặc status)
-  const { data: documents } = await supabase
+  const { data: documents } = await supabaseAdmin
     .from('documents')
     .select('*')
     .order('created_at', { ascending: false })

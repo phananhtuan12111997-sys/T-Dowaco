@@ -28,9 +28,11 @@ type User = {
 
 interface CreateDocumentFormProps {
   users: User[]
+  currentUserId: string
+  initialData?: any
 }
 
-export function CreateDocumentForm({ users }: CreateDocumentFormProps) {
+export function CreateDocumentForm({ users, currentUserId, initialData }: CreateDocumentFormProps) {
   const [selectedUsers, setSelectedUsers] = useState<User[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -40,26 +42,44 @@ export function CreateDocumentForm({ users }: CreateDocumentFormProps) {
   const [isSendAll, setIsSendAll] = useState(false)
   
   const [fileError, setFileError] = useState<string | null>(null)
-  const [fileName, setFileName] = useState<string | null>(null)
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+  const [existingAttachments, setExistingAttachments] = useState<{name: string, url: string, size: number}[]>(initialData?.attachments || [])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Handle file change
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    const files = e.target.files
     setFileError(null)
     
-    if (file) {
-      // Check 500MB limit (500 * 1024 * 1024 bytes)
-      if (file.size > 500 * 1024 * 1024) {
-        setFileError('File vượt quá dung lượng tối đa 500MB.')
-        setFileName(null)
-        if (fileInputRef.current) fileInputRef.current.value = ''
-      } else {
-        setFileName(file.name)
+    if (files && files.length > 0) {
+      const newFiles = Array.from(files)
+      const validFiles: File[] = []
+      
+      let hasError = false
+      newFiles.forEach(file => {
+        // Check 500MB limit
+        if (file.size > 500 * 1024 * 1024) {
+          setFileError('Một hoặc nhiều file vượt quá dung lượng tối đa 500MB.')
+          hasError = true
+        } else {
+          validFiles.push(file)
+        }
+      })
+      
+      setSelectedFiles(prev => [...prev, ...validFiles])
+      
+      if (hasError && fileInputRef.current) {
+        fileInputRef.current.value = ''
       }
-    } else {
-      setFileName(null)
     }
+  }
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const removeExistingFile = (index: number) => {
+    setExistingAttachments(prev => prev.filter((_, i) => i !== index))
   }
 
   // Handle priority toggle -> Auto select "Ban điều hành"
@@ -86,7 +106,7 @@ export function CreateDocumentForm({ users }: CreateDocumentFormProps) {
     setIsSendAll(checked)
     
     if (checked) {
-      setSelectedUsers(users)
+      setSelectedUsers(users.filter(u => u.id !== currentUserId))
     } else {
       // Option: clear users when unchecked, or keep them. Let's keep existing, but uncheck means they can remove.
       // Usually turning off send all means clearing the list
@@ -124,11 +144,35 @@ export function CreateDocumentForm({ users }: CreateDocumentFormProps) {
     u.full_name?.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    
+    if (selectedUsers.length === 0) {
+      alert('Vui lòng chọn người nhận.')
+      return
+    }
+
+    const formData = new FormData(e.currentTarget)
+    formData.delete('attachments')
+    selectedFiles.forEach(file => {
+      formData.append('attachments', file)
+    })
+    const res = await createDocument(formData)
+    if (res?.success) {
+      alert('Gửi công văn thành công!')
+      window.location.href = '/documents/incoming'
+    } else if (res?.error) {
+      alert('Có lỗi xảy ra: ' + res.error)
+    }
+  }
+
   return (
     <>
-      <form action={createDocument}>
+      <form onSubmit={handleSubmit}>
         {/* Hidden input to pass selected users array to Server Action */}
         <input type="hidden" name="selected_users" value={JSON.stringify(selectedUsers.map(u => u.id))} />
+        <input type="hidden" name="forwardFromId" value={initialData?.forwardFromId || ''} />
+        <input type="hidden" name="initialAttachments" value={JSON.stringify(existingAttachments)} />
         
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
@@ -159,10 +203,10 @@ export function CreateDocumentForm({ users }: CreateDocumentFormProps) {
                 <CardTitle className="text-base font-semibold text-slate-800">Nội dung văn bản</CardTitle>
               </CardHeader>
               <CardContent className="pt-6 space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="type" className="text-slate-700 font-medium">Loại văn bản <span className="text-red-500">*</span></Label>
-                    <Select name="type" required>
+                    <Select name="type" required defaultValue={initialData?.type}>
                       <SelectTrigger className="w-full bg-white">
                         <SelectValue placeholder="-- Chọn loại văn bản --" />
                       </SelectTrigger>
@@ -190,7 +234,20 @@ export function CreateDocumentForm({ users }: CreateDocumentFormProps) {
                   
                   <div className="space-y-2">
                     <Label htmlFor="symbol_number" className="text-slate-700 font-medium">Số ký hiệu <span className="text-red-500">*</span></Label>
-                    <Input id="symbol_number" name="symbol_number" placeholder="VD: 01/CV-CTY" required className="bg-white" />
+                    <Input id="symbol_number" name="symbol_number" placeholder="VD: 01/CV-CTY" required className="bg-white" defaultValue={initialData?.symbol_number} />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="urgency" className="text-slate-700 font-medium">Độ ưu tiên <span className="text-red-500">*</span></Label>
+                    <Select name="urgency" required defaultValue={initialData?.priority ? 'Quan trọng' : 'Bình thường'}>
+                      <SelectTrigger className="w-full bg-white">
+                        <SelectValue placeholder="Chọn độ ưu tiên" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Bình thường">Bình thường</SelectItem>
+                        <SelectItem value="Quan trọng">Quan trọng</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
@@ -199,19 +256,22 @@ export function CreateDocumentForm({ users }: CreateDocumentFormProps) {
                   <Input 
                     id="summary" 
                     name="summary" 
-                    placeholder="Tóm tắt ngắn gọn nội dung công văn..." 
-                    className="bg-white"
+                    placeholder="Nhập trích yếu văn bản..." 
                     required 
+                    className="bg-white"
+                    defaultValue={initialData?.summary}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="content" className="text-slate-700 font-medium">Nội dung chi tiết</Label>
+                  <Label htmlFor="content" className="text-slate-700 font-medium">Nội dung <span className="text-red-500">*</span></Label>
                   <Textarea 
                     id="content" 
                     name="content" 
-                    placeholder="Nhập nội dung đầy đủ..." 
-                    className="min-h-[150px] bg-white resize-y"
+                    placeholder="Nhập nội dung chi tiết của văn bản..." 
+                    required 
+                    className="min-h-[200px] bg-white resize-y"
+                    defaultValue={initialData?.content}
                   />
                 </div>
 
@@ -220,21 +280,55 @@ export function CreateDocumentForm({ users }: CreateDocumentFormProps) {
                     <Paperclip className="w-4 h-4" /> Tệp đính kèm (Tối đa 500MB/file)
                   </Label>
                   <div className={`flex flex-col gap-2 border rounded-md p-3 ${fileError ? 'border-red-500 bg-red-50' : 'border-slate-200 bg-slate-50/50'}`}>
-                    <div className="flex items-center gap-3">
-                      <Label htmlFor="attachment" className="cursor-pointer bg-white border border-slate-200 px-4 py-2 rounded-md text-sm font-medium hover:bg-slate-50 transition-colors inline-block text-center">
-                        Chọn tệp
-                      </Label>
-                      <Input 
-                        id="attachment" 
-                        type="file" 
-                        name="attachment"
-                        className="hidden" 
-                        ref={fileInputRef}
-                        onChange={handleFileChange}
-                      />
-                      <span className="text-sm text-slate-500 flex-1 truncate">
-                        {fileName ? fileName : 'Không có tệp nào được chọn'}
-                      </span>
+                    <div className="flex flex-col gap-3">
+                      <div>
+                        <Label htmlFor="attachment" className="cursor-pointer bg-white border border-slate-200 px-4 py-2 rounded-md text-sm font-medium hover:bg-slate-50 transition-colors inline-block text-center">
+                          Chọn tệp
+                        </Label>
+                        <Input 
+                          id="attachment" 
+                          type="file" 
+                          name="attachments"
+                          multiple
+                          accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,image/*"
+                          className="hidden" 
+                          ref={fileInputRef}
+                          onChange={handleFileChange}
+                        />
+                      </div>
+                      
+                      {(selectedFiles.length > 0 || existingAttachments.length > 0) ? (
+                        <div className="flex flex-col gap-2 mt-2">
+                          {existingAttachments.map((f, i) => (
+                            <div key={`exist-${i}`} className="flex items-center justify-between bg-white border border-slate-200 p-2 rounded-md">
+                              <span className="text-sm text-slate-700 truncate">{f.name} ({(f.size / 1024 / 1024).toFixed(2)} MB) - Đã tải lên</span>
+                              <button 
+                                type="button" 
+                                onClick={() => removeExistingFile(i)}
+                                className="text-slate-400 hover:text-red-500"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                          {selectedFiles.map((f, i) => (
+                            <div key={`new-${i}`} className="flex items-center justify-between bg-white border border-slate-200 p-2 rounded-md">
+                              <span className="text-sm text-slate-700 truncate">{f.name} ({(f.size / 1024 / 1024).toFixed(2)} MB)</span>
+                              <button 
+                                type="button" 
+                                onClick={() => removeFile(i)}
+                                className="text-slate-400 hover:text-red-500"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-slate-500">
+                          Chưa có tệp nào được chọn
+                        </span>
+                      )}
                     </div>
                     {fileError && <span className="text-sm text-red-500 font-medium">{fileError}</span>}
                   </div>
@@ -280,11 +374,11 @@ export function CreateDocumentForm({ users }: CreateDocumentFormProps) {
                         checked={isSendAll}
                         onChange={handleSendAllChange}
                       />
-                      <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#1a56db]"></div>
+                      <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-600"></div>
                     </label>
-                    <span className="text-sm font-bold text-slate-700 uppercase">GỬI TOÀN CÔNG TY</span>
+                    <span className="text-sm font-bold text-red-600 uppercase">GỬI TOÀN CÔNG TY</span>
                   </div>
-                  <p className="text-xs text-slate-500 pl-12">Nếu bật, văn bản sẽ gửi đến tất cả nhân viên.</p>
+                  <p className="text-xs text-red-500 pl-12">Nếu bật, văn bản sẽ gửi đến tất cả nhân viên.</p>
                 </div>
 
               </CardContent>
@@ -319,7 +413,7 @@ export function CreateDocumentForm({ users }: CreateDocumentFormProps) {
                             </div>
                             <div className="truncate">
                               <p className="text-sm font-medium text-slate-800 truncate">{user.full_name}</p>
-                              <p className="text-xs text-slate-500 truncate">{user.department || 'Chưa có phòng ban'}</p>
+                              <p className="text-xs text-slate-500 truncate">{user.department || 'Chưa có phòng ban'}{user.role ? ` - ${user.role}` : ''}</p>
                             </div>
                           </div>
                           <button 
@@ -345,12 +439,9 @@ export function CreateDocumentForm({ users }: CreateDocumentFormProps) {
         <DialogContent className="max-w-3xl p-0 overflow-hidden bg-white">
           <div className="flex flex-col h-[80vh] max-h-[600px]">
             {/* Modal Header */}
-            <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
-              <h2 className="text-lg font-bold text-slate-800">Chọn người nhận văn bản</h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+            <DialogHeader className="p-4 border-b border-slate-100 flex flex-row justify-between items-center bg-white shrink-0 space-y-0">
+              <DialogTitle className="text-lg font-bold text-slate-800">Chọn người nhận văn bản</DialogTitle>
+            </DialogHeader>
 
             {/* Modal Body */}
             <div className="flex flex-1 overflow-hidden">
@@ -393,7 +484,7 @@ export function CreateDocumentForm({ users }: CreateDocumentFormProps) {
                             </div>
                             <div>
                               <p className="text-sm font-medium text-slate-800">{user.full_name}</p>
-                              <p className="text-xs text-slate-500">{user.department || 'Chưa có phòng ban'}</p>
+                              <p className="text-xs text-slate-500">{user.department || 'Chưa có phòng ban'}{user.role ? ` - ${user.role}` : ''}</p>
                             </div>
                           </div>
                           <Button 

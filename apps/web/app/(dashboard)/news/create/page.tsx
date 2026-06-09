@@ -1,9 +1,4 @@
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Checkbox } from '@/components/ui/checkbox'
-import { createNews } from '../actions'
+import { NewsForm } from './client-form'
 import Link from 'next/link'
 
 export default function CreateNewsPage() {
@@ -24,60 +19,7 @@ export default function CreateNewsPage() {
         </div>
         
         <div className="p-6">
-          <form action={createNews} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="title" className="text-slate-700 font-semibold">Tiêu đề tin tức <span className="text-red-500">*</span></Label>
-              <Input 
-                id="title" 
-                name="title" 
-                placeholder="Ví dụ: TIN BUỒN, THÔNG BÁO LỊCH NGHỈ TẾT..." 
-                required 
-                className="bg-slate-50 border-slate-200 focus-visible:ring-blue-500 font-medium uppercase"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="content" className="text-slate-700 font-semibold">Nội dung chi tiết <span className="text-red-500">*</span></Label>
-              <Textarea 
-                id="content" 
-                name="content" 
-                placeholder="Nhập nội dung đầy đủ của bản tin..." 
-                required 
-                className="bg-slate-50 border-slate-200 focus-visible:ring-blue-500 min-h-[150px]"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="author_name" className="text-slate-700 font-semibold">Người đăng (Tên hiển thị)</Label>
-                <Input 
-                  id="author_name" 
-                  name="author_name" 
-                  placeholder="Ví dụ: Văn thư CNCN Long Bình"
-                  defaultValue="Văn phòng Điện tử"
-                  className="bg-slate-50 border-slate-200 focus-visible:ring-blue-500"
-                />
-              </div>
-
-              <div className="space-y-2 pt-8">
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="has_attachment" name="has_attachment" />
-                  <Label htmlFor="has_attachment" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Có tệp đính kèm
-                  </Label>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-6 flex justify-end gap-3 border-t border-slate-100">
-              <Button type="button" variant="outline" asChild className="border-slate-300 text-slate-700">
-                <Link href="/news">Hủy bỏ</Link>
-              </Button>
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700 px-8">
-                Đăng bản tin
-              </Button>
-            </div>
-          </form>
+          <NewsForm />
         </div>
       </div>
     </div>

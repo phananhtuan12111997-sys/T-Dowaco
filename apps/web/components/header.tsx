@@ -22,6 +22,8 @@ import { SidebarNav } from './sidebar-nav'
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 
+import { NotificationBell } from './notification-bell'
+
 interface Profile {
   full_name: string;
   role: string;
@@ -68,13 +70,7 @@ export function Header({ profile }: { profile: Profile | null }) {
       
       <div className="flex items-center gap-3 md:gap-6">
         {/* Notification */}
-        <button className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors">
-          <Bell size={24} />
-          <span className="absolute top-1 right-1 flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-          </span>
-        </button>
+        <NotificationBell />
         
         {/* User Profile */}
         <DropdownMenu>

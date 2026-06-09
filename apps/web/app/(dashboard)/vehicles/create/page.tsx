@@ -10,8 +10,24 @@ import {
 } from "@/components/ui/select"
 import { createVehicleRequest } from '../actions'
 import Link from 'next/link'
+import { createClient } from '@/utils/supabase/server'
+import { CompanionSelector } from './companion-selector'
 
-export default function CreateVehicleRequestPage() {
+export default async function CreateVehicleRequestPage() {
+  const supabase = await createClient()
+  
+  // Fetch approvers (Ban điều hành)
+  const { data: approvers } = await supabase
+    .from('profiles')
+    .select('id, full_name, department')
+    .eq('department', 'Ban điều hành')
+    .order('full_name')
+
+  // Fetch all users for companions
+  const { data: allUsers } = await supabase
+    .from('profiles')
+    .select('id, full_name, department')
+    .order('full_name')
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
@@ -43,16 +59,15 @@ export default function CreateVehicleRequestPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="status" className="text-slate-700 font-semibold">Trạng thái (Ban đầu)</Label>
-                <Select name="status" defaultValue="Chờ duyệt">
+                <Label htmlFor="approver_id" className="text-slate-700 font-semibold">Người duyệt <span className="text-red-500">*</span></Label>
+                <Select name="approver_id" required>
                   <SelectTrigger className="bg-slate-50 border-slate-200">
-                    <SelectValue placeholder="Chọn trạng thái" />
+                    <SelectValue placeholder="Chọn người duyệt" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Chờ duyệt">Chờ duyệt</SelectItem>
-                    <SelectItem value="Đã duyệt">Đã duyệt</SelectItem>
-                    <SelectItem value="Từ chối">Từ chối</SelectItem>
-                    <SelectItem value="Đã hoàn thành">Đã hoàn thành</SelectItem>
+                    {approvers?.map(a => (
+                      <SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -82,25 +97,29 @@ export default function CreateVehicleRequestPage() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="end_time" className="text-slate-700 font-semibold">Thời gian về (Dự kiến)</Label>
+                <Label htmlFor="end_time" className="text-slate-700 font-semibold">Thời gian về <span className="text-red-500">*</span></Label>
                 <Input 
                   id="end_time" 
                   name="end_time" 
                   type="datetime-local"
+                  required
                   className="bg-slate-50 border-slate-200 focus-visible:ring-blue-500"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="vehicle_info" className="text-slate-700 font-semibold">Phương tiện & Tài xế đề xuất (Nếu có)</Label>
+              <Label htmlFor="vehicle_info" className="text-slate-700 font-semibold">Phương tiện & Tài xế đề xuất <span className="text-red-500">*</span></Label>
               <Input 
                 id="vehicle_info" 
                 name="vehicle_info" 
                 placeholder="Ví dụ: Xe Fortuner 7 chỗ - Tài xế Hùng"
+                required
                 className="bg-slate-50 border-slate-200 focus-visible:ring-blue-500"
               />
             </div>
+
+            <CompanionSelector allUsers={allUsers || []} />
 
             <div className="pt-6 flex justify-end gap-3 border-t border-slate-100">
               <Button type="button" variant="outline" asChild className="border-slate-300 text-slate-700">

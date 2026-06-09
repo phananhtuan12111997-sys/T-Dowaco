@@ -1,7 +1,10 @@
 import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
-import { Plus, List, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, List, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { deleteMeeting } from './actions'
+import { DeleteButton } from './delete-button'
+import { SuccessAlert } from './success-alert'
 import {
   startOfMonth,
   endOfMonth,
@@ -13,7 +16,9 @@ import {
   isToday,
   isSameDay,
   addMonths,
-  subMonths
+  subMonths,
+  addYears,
+  subYears
 } from 'date-fns'
 import { vi } from 'date-fns/locale'
 
@@ -23,6 +28,20 @@ export default async function MeetingsPage({
   searchParams: { view?: string, date?: string }
 }) {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  let isAllowed = false
+  let isITAdmin = false
+  if (user) {
+    const { data: profile } = await supabase.from('profiles').select('role, is_admin, department').eq('id', user.id).single()
+    if (profile && (profile.role !== 'Nhân viên' || profile.is_admin)) {
+      isAllowed = true
+    }
+    if (profile && (profile.department === 'Phòng IT' || profile.is_admin)) {
+      isITAdmin = true
+    }
+  }
+
   const resolvedSearchParams = await searchParams
   // Xử lý query params
   const view = resolvedSearchParams?.view || 'calendar'
@@ -32,6 +51,8 @@ export default async function MeetingsPage({
   const currentDate = dateParam ? new Date(dateParam) : new Date()
   const prevMonth = format(subMonths(currentDate, 1), 'yyyy-MM-dd')
   const nextMonth = format(addMonths(currentDate, 1), 'yyyy-MM-dd')
+  const prevYear = format(subYears(currentDate, 1), 'yyyy-MM-dd')
+  const nextYear = format(addYears(currentDate, 1), 'yyyy-MM-dd')
   const todayDate = format(new Date(), 'yyyy-MM-dd')
   
   const monthStart = startOfMonth(currentDate)
@@ -52,14 +73,21 @@ export default async function MeetingsPage({
     .order('start_time', { ascending: true })
 
   // Lọc cuộc họp sắp tới (từ hôm nay trở đi)
-  const upcomingMeetings = meetings?.filter(m => new Date(m.start_time) >= new Date(new Date().setHours(0,0,0,0))) || []
+  const upcomingMeetings = meetings && meetings.length > 0 
+    ? meetings.filter((m: any) => new Date(m.start_time) >= new Date()).sort((a: any, b: any) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
+    : []
+
+  const myCreatedMeetings = meetings && meetings.length > 0 && user
+    ? meetings.filter((m: any) => m.created_by === user.id).sort((a: any, b: any) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime())
+    : []
 
   return (
     <div className="space-y-6">
+      <SuccessAlert />
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
-            <span>DOFFICE</span>
+            <Link href="/meetings" className="hover:text-blue-600 transition-colors">T-Dowaco</Link>
             <span>→</span>
             <span>Quản lý lịch họp</span>
           </div>
@@ -76,11 +104,13 @@ export default async function MeetingsPage({
             </Button>
           </div>
           
-          <Button asChild className="bg-emerald-500 hover:bg-emerald-600 text-white">
-            <Link href="/meetings/create">
-              <Plus className="mr-2 h-4 w-4" /> Đăng ký lịch họp
-            </Link>
-          </Button>
+          {isAllowed && (
+            <Button asChild className="bg-emerald-500 hover:bg-emerald-600 text-white">
+              <Link href="/meetings/create">
+                <Plus className="mr-2 h-4 w-4" /> Đăng ký lịch họp
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -95,18 +125,28 @@ export default async function MeetingsPage({
             <div className="flex items-center gap-4">
               <div className="flex">
                 <Button variant="outline" size="icon" className="h-8 w-8 rounded-r-none border-blue-400 text-blue-600 hover:bg-blue-50" asChild>
-                  <Link href={`?view=${view}&date=${prevMonth}`}>
+                  <Link href={`/meetings?view=${view}&date=${prevYear}`} title="Năm trước">
+                    <ChevronLeft className="h-4 w-4" strokeWidth={3} />
+                  </Link>
+                </Button>
+                <Button variant="outline" size="icon" className="h-8 w-8 rounded-none border-blue-400 text-blue-600 border-l-0 hover:bg-blue-50" asChild>
+                  <Link href={`/meetings?view=${view}&date=${prevMonth}`} title="Tháng trước">
                     <ChevronLeft className="h-4 w-4" />
                   </Link>
                 </Button>
-                <Button variant="outline" size="icon" className="h-8 w-8 rounded-l-none border-blue-400 text-blue-600 border-l-0 hover:bg-blue-50" asChild>
-                  <Link href={`?view=${view}&date=${nextMonth}`}>
+                <Button variant="outline" size="icon" className="h-8 w-8 rounded-none border-blue-400 text-blue-600 border-l-0 hover:bg-blue-50" asChild>
+                  <Link href={`/meetings?view=${view}&date=${nextMonth}`} title="Tháng sau">
                     <ChevronRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button variant="outline" size="icon" className="h-8 w-8 rounded-l-none border-blue-400 text-blue-600 border-l-0 hover:bg-blue-50" asChild>
+                  <Link href={`/meetings?view=${view}&date=${nextYear}`} title="Năm sau">
+                    <ChevronRight className="h-4 w-4" strokeWidth={3} />
                   </Link>
                 </Button>
               </div>
               <Button variant="outline" size="sm" className="h-8 border-blue-400 text-blue-600 hover:bg-blue-50 bg-blue-50" asChild>
-                <Link href={`?view=${view}&date=${todayDate}`}>today</Link>
+                <Link href={`/meetings?view=${view}&date=${todayDate}`}>Hôm nay</Link>
               </Button>
             </div>
             <div className="text-xl font-bold text-slate-800">
@@ -114,11 +154,11 @@ export default async function MeetingsPage({
             </div>
             <div className="flex rounded-md overflow-hidden border border-blue-400">
               <Button variant="ghost" size="sm" className="h-8 rounded-none bg-blue-500 text-white hover:bg-blue-600 hover:text-white" asChild>
-                <Link href={`?view=calendar&date=${format(currentDate, 'yyyy-MM-dd')}`}>month</Link>
+                <Link href={`/meetings?view=calendar&date=${format(currentDate, 'yyyy-MM-dd')}`}>Tháng</Link>
               </Button>
-              <Button variant="ghost" size="sm" className="h-8 rounded-none text-blue-600 hover:bg-blue-50 border-l border-blue-400" disabled>week</Button>
+              <Button variant="ghost" size="sm" className="h-8 rounded-none text-blue-600 hover:bg-blue-50 border-l border-blue-400" disabled>Tuần</Button>
               <Button variant="ghost" size="sm" className="h-8 rounded-none border-l border-blue-400 text-blue-600 hover:bg-blue-50" asChild>
-                <Link href={`?view=table&date=${format(currentDate, 'yyyy-MM-dd')}`}>list</Link>
+                <Link href={`/meetings?view=table&date=${format(currentDate, 'yyyy-MM-dd')}`}>Danh sách</Link>
               </Button>
             </div>
           </div>
@@ -188,14 +228,16 @@ export default async function MeetingsPage({
                       <th className="px-6 py-4 font-medium">THỜI GIAN</th>
                       <th className="px-6 py-4 font-medium">ĐỊA ĐIỂM</th>
                       <th className="px-6 py-4 font-medium text-center">TRẠNG THÁI</th>
+                      <th className="px-6 py-4 font-medium text-right">THAO TÁC</th>
                     </tr>
                   </thead>
                   <tbody>
                     {meetings && meetings.length > 0 ? (
-                      meetings.map((meeting) => (
+                      meetings.map((meeting: any) => (
                         <tr key={meeting.id} className="border-b border-slate-100 hover:bg-slate-50">
                           <td className="px-6 py-4">
                             <div className="font-medium text-slate-900">{meeting.title}</div>
+                            {meeting.host && <div className="text-xs text-slate-500 mt-1">Chủ trì: {meeting.host}</div>}
                             {meeting.description && <div className="text-xs text-slate-500 mt-1 truncate max-w-[250px]">{meeting.description}</div>}
                           </td>
                           <td className="px-6 py-4 text-slate-600">
@@ -212,11 +254,27 @@ export default async function MeetingsPage({
                               {meeting.status}
                             </span>
                           </td>
+                          <td className="px-6 py-4 text-right">
+                            {user && (meeting.created_by === user.id || isITAdmin) && (
+                              <div className="flex items-center justify-end gap-2">
+                                {meeting.created_by === user.id && (
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" asChild>
+                                    <Link href={`/meetings/edit/${meeting.id}`}>
+                                      <Pencil className="h-4 w-4" />
+                                    </Link>
+                                  </Button>
+                                )}
+                                <form action={deleteMeeting.bind(null, meeting.id)}>
+                                  <DeleteButton />
+                                </form>
+                              </div>
+                            )}
+                          </td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
+                        <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
                           Không có cuộc họp nào.
                         </td>
                       </tr>
@@ -234,7 +292,7 @@ export default async function MeetingsPage({
           
           <div className="space-y-4">
             {upcomingMeetings.length > 0 ? (
-              upcomingMeetings.slice(0, 5).map(meeting => (
+              upcomingMeetings.slice(0, 5).map((meeting: any) => (
                 <div key={meeting.id} className="border-l-4 border-emerald-500 pl-3 py-1">
                   <div className="font-medium text-slate-800 text-sm">{meeting.title}</div>
                   <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">
@@ -247,10 +305,41 @@ export default async function MeetingsPage({
                 </div>
               ))
             ) : (
-              <div className="text-center py-8 text-sm text-slate-500">
-                Không có cuộc họp nào sắp tới.
-              </div>
+              <div className="text-sm text-slate-500 italic">Không có cuộc họp sắp tới</div>
             )}
+          </div>
+
+          <div className="mt-8">
+            <h3 className="font-semibold text-slate-800 mb-4 pb-2 border-b border-slate-100">Cuộc họp đã tạo</h3>
+            
+            <div className="space-y-4">
+              {myCreatedMeetings.length > 0 ? (
+                myCreatedMeetings.slice(0, 10).map((meeting: any) => (
+                  <div key={meeting.id} className="border-l-4 border-blue-500 pl-3 py-1 flex justify-between items-start">
+                    <div>
+                      <div className="font-medium text-slate-800 text-sm">{meeting.title}</div>
+                      <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                        <CalendarIcon className="h-3 w-3" />
+                        {format(new Date(meeting.start_time), 'dd/MM/yyyy HH:mm')}
+                      </div>
+                      <div className="text-xs text-slate-500 mt-1">Phòng: {meeting.room}</div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Button variant="ghost" size="icon" className="h-6 w-6 text-blue-600 hover:text-blue-700 hover:bg-blue-50" asChild>
+                        <Link href={`/meetings/edit/${meeting.id}`}>
+                          <Pencil className="h-3 w-3" />
+                        </Link>
+                      </Button>
+                      <form action={deleteMeeting.bind(null, meeting.id)}>
+                        <DeleteButton />
+                      </form>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-sm text-slate-500 italic">Bạn chưa tạo cuộc họp nào trong tháng này</div>
+              )}
+            </div>
           </div>
         </div>
       </div>

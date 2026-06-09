@@ -81,11 +81,11 @@ export function CreateUserButton() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="username">Tài khoản (Bắt buộc)</Label>
-              <Input id="username" name="username" required placeholder="VD: nguyenvana" />
+              <Input id="username" name="username" required placeholder="VD: nguyenvana" autoComplete="off" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Mật khẩu khởi tạo (Bắt buộc)</Label>
-              <Input id="password" name="password" required type="password" placeholder="Tối thiểu 6 ký tự" />
+              <Input id="password" name="password" required type="password" placeholder="Tối thiểu 6 ký tự" autoComplete="new-password" />
             </div>
           </div>
 
@@ -120,6 +120,7 @@ export function CreateUserButton() {
                   <SelectItem value="Ban điều hành">Ban điều hành</SelectItem>
                   <SelectItem value="Phòng tổ chức Hành chánh">Phòng tổ chức Hành chánh</SelectItem>
                   <SelectItem value="Phòng Tài chính Kế toán">Phòng Tài chính Kế toán</SelectItem>
+                  <SelectItem value="Phòng IT">Phòng IT</SelectItem>
                   <SelectItem value="Phòng Kế hoạch Kỹ thuật">Phòng Kế hoạch Kỹ thuật</SelectItem>
                   <SelectItem value="Phòng Kinh Doanh">Phòng Kinh Doanh</SelectItem>
                   <SelectItem value="Đội xây lắp - Chống thất thoát">Đội xây lắp - Chống thất thoát</SelectItem>
@@ -146,6 +147,7 @@ export function CreateUserButton() {
                   <SelectItem value="Đội phó">Đội phó</SelectItem>
                   <SelectItem value="Phó quản đốc">Phó quản đốc</SelectItem>
                   <SelectItem value="Quản đốc">Quản đốc</SelectItem>
+                  <SelectItem value="Nhân viên">Nhân viên</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { CreateUserButton } from './create-user-button'
+import { UserActions } from './user-actions'
 import {
   Table,
   TableCell,
@@ -55,6 +56,7 @@ export default async function HRPage() {
                 <TableHead>Chức vụ</TableHead>
                 <TableHead>Thông tin liên hệ</TableHead>
                 <TableHead>Trạng thái</TableHead>
+                <TableHead className="text-right w-[100px]">Thao tác</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -79,11 +81,14 @@ export default async function HRPage() {
                       <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">Hoạt động</Badge>
                     )}
                   </TableCell>
+                  <TableCell className="text-right">
+                    <UserActions user={u} />
+                  </TableCell>
                 </TableRow>
               ))}
               {(!users || users.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center h-24 text-slate-500">
+                  <TableCell colSpan={7} className="text-center h-24 text-slate-500">
                     Chưa có nhân viên nào.
                   </TableCell>
                 </TableRow>

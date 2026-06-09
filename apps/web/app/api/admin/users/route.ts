@@ -53,7 +53,7 @@ export async function POST(request: Request) {
     // The user's "username" is used as the prefix for a fake email if they don't provide a real one.
     // However, the user request says they can input email as an optional personal info.
     // Supabase auth requires an email. We'll use the provided email, or a fake one.
-    const authEmail = username.includes('@') ? username : `${username}@t-dowaco.vn`
+    const authEmail = username.includes('@') ? username : `${username}@tdowaco.vn`
 
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: authEmail,
