@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Bell, BellOff, Calendar, Car, Briefcase, FileText, MessageSquare } from 'lucide-react'
+import { Bell, BellOff, Calendar, Car, Briefcase, FileText, MessageSquare, Newspaper } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { getNotifications, getUnreadCount, markAsRead, markAllAsRead } from '@/app/actions/notifications'
@@ -21,6 +21,9 @@ type Notification = {
 
 const getNotificationStyle = (message: string) => {
   const msg = message.toLowerCase()
+  if (msg.includes('bảng tin')) {
+    return { icon: <Newspaper className="w-5 h-5 text-pink-600" />, bgClass: 'bg-pink-100' }
+  }
   if (msg.includes('lịch họp')) {
     return { icon: <Calendar className="w-5 h-5 text-indigo-600" />, bgClass: 'bg-indigo-100' }
   }
@@ -28,15 +31,9 @@ const getNotificationStyle = (message: string) => {
     return { icon: <Car className="w-5 h-5 text-emerald-600" />, bgClass: 'bg-emerald-100' }
   }
   if (msg.includes('công việc')) {
-    if (msg.includes('bình luận') || msg.includes('báo cáo')) {
-      return { icon: <MessageSquare className="w-5 h-5 text-amber-600" />, bgClass: 'bg-amber-100' }
-    }
     return { icon: <Briefcase className="w-5 h-5 text-blue-600" />, bgClass: 'bg-blue-100' }
   }
   if (msg.includes('công văn')) {
-    if (msg.includes('bình luận') || msg.includes('báo cáo')) {
-      return { icon: <MessageSquare className="w-5 h-5 text-amber-600" />, bgClass: 'bg-amber-100' }
-    }
     return { icon: <FileText className="w-5 h-5 text-purple-600" />, bgClass: 'bg-purple-100' }
   }
   return { icon: <Bell className="w-5 h-5 text-slate-600" />, bgClass: 'bg-slate-100' }
@@ -117,7 +114,7 @@ export function NotificationBell() {
       )
       .subscribe()
 
-    // Fallback polling every 10 seconds to ensure real-time experience
+    // Fallback polling every 3 seconds to ensure real-time experience
     const interval = setInterval(async () => {
       const count = await getUnreadCount()
       if (count > unreadCountRef.current) {
@@ -130,7 +127,7 @@ export function NotificationBell() {
         setUnreadCount(count)
         unreadCountRef.current = count
       }
-    }, 10000)
+    }, 3000)
 
     return () => {
       supabase.removeChannel(channel)

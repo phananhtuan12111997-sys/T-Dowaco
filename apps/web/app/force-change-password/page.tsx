@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { AlertCircle, ShieldAlert } from 'lucide-react'
+import { AlertCircle, ShieldAlert, Loader2 } from 'lucide-react'
 
 export default function ForceChangePasswordPage() {
   const [error, setError] = useState<string | null>(null)
@@ -64,6 +64,7 @@ export default function ForceChangePasswordPage() {
             )}
 
             <Button className="w-full bg-orange-600 hover:bg-orange-700 mt-4" type="submit" disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {loading ? 'Đang cập nhật...' : 'Cập nhật mật khẩu'}
             </Button>
           </form>

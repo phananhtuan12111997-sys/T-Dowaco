@@ -50,10 +50,10 @@ export async function acceptDocument(documentId: string) {
       const { data: profile } = await supabaseAdmin.from('profiles').select('full_name').eq('id', userData.user.id).single()
       const name = profile?.full_name || 'Một người dùng'
       
-      await createGroupedNotification(document.created_by, documentId, `đã tiếp nhận công văn: ${document.summary || document.title}`, name, 'đã tiếp nhận công văn')
+      await createGroupedNotification(document.created_by, documentId, `đã cập nhật trạng thái công văn: ${document.summary || document.title}`, name, 'cập nhật trạng thái công văn')
       
       if (recipient?.forwarded_from && recipient.forwarded_from !== document.created_by) {
-        await createGroupedNotification(recipient.forwarded_from, documentId, `đã tiếp nhận công văn được chuyển tiếp: ${document.summary || document.title}`, name, 'đã tiếp nhận công văn được chuyển tiếp')
+        await createGroupedNotification(recipient.forwarded_from, documentId, `đã cập nhật trạng thái công văn được chuyển tiếp: ${document.summary || document.title}`, name, 'cập nhật trạng thái công văn')
       }
     }
 
@@ -130,7 +130,7 @@ export async function reportDocument(formData: FormData) {
     
     // Gửi thông báo cho người giao trực tiếp
     const approverId = recipient?.forwarded_from || document.created_by
-    await createGroupedNotification(approverId, documentId, `đã gửi báo cáo công văn: ${document.summary || document.title}`, name, 'đã gửi báo cáo công văn')
+    await createGroupedNotification(approverId, documentId, `đã cập nhật trạng thái công văn: ${document.summary || document.title}`, name, 'cập nhật trạng thái công văn')
   }
 
   revalidatePath(`/documents/incoming/${documentId}`)
@@ -227,7 +227,7 @@ export async function approveDocument(documentId: string, recipientId: string) {
   if (document) {
     const { data: currentProfile } = await supabaseAdmin.from('profiles').select('full_name').eq('id', userData.user.id).single()
     const name = currentProfile?.full_name || 'Người giao'
-    await createGroupedNotification(recipientId, documentId, `đã duyệt báo cáo công văn: ${document.summary || document.title}`, name, 'đã duyệt báo cáo công văn')
+    await createGroupedNotification(recipientId, documentId, `đã cập nhật trạng thái công văn: ${document.summary || document.title}`, name, 'cập nhật trạng thái công văn')
   }
 
   // Check if all recipients are done
@@ -277,7 +277,7 @@ export async function rejectDocument(documentId: string, recipientId: string, re
   if (document) {
     const { data: currentProfile } = await supabaseAdmin.from('profiles').select('full_name').eq('id', userData.user.id).single()
     const name = currentProfile?.full_name || 'Người giao'
-    await createGroupedNotification(recipientId, documentId, `đã từ chối báo cáo công văn: ${document.summary || document.title}`, name, 'đã từ chối báo cáo công văn')
+    await createGroupedNotification(recipientId, documentId, `đã cập nhật trạng thái công văn: ${document.summary || document.title}`, name, 'cập nhật trạng thái công văn')
   }
 
   revalidatePath(`/documents/incoming/${documentId}`)

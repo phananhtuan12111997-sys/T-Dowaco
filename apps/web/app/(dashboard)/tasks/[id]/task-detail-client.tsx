@@ -66,6 +66,14 @@ export function TaskDetailClient({
     }
   }, [searchParams, isAssigner])
 
+  // Polling for real-time updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      router.refresh()
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [router])
+
   const handleAccept = async () => {
     if (!currentUserRecipient) return
     setIsActionLoading(true)

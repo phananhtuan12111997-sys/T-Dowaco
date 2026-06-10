@@ -44,10 +44,10 @@ export async function acceptTask(taskId: string) {
     const { data: profile } = await supabaseAdmin.from('profiles').select('full_name').eq('id', userData.user.id).single()
     const name = profile?.full_name || 'Một người dùng'
     
-    await createGroupedNotification(task.created_by, taskId, `đã tiếp nhận công việc: ${task.title}`, name, 'đã tiếp nhận công việc')
+    await createGroupedNotification(task.created_by, taskId, `đã cập nhật trạng thái công việc: ${task.title}`, name, 'cập nhật trạng thái công việc')
     
     if (recipient?.forwarded_from && recipient.forwarded_from !== task.created_by) {
-      await createGroupedNotification(recipient.forwarded_from, taskId, `đã tiếp nhận công việc được chuyển tiếp: ${task.title}`, name, 'đã tiếp nhận công việc được chuyển tiếp')
+      await createGroupedNotification(recipient.forwarded_from, taskId, `đã cập nhật trạng thái công việc được chuyển tiếp: ${task.title}`, name, 'cập nhật trạng thái công việc')
     }
   }
 
@@ -127,10 +127,10 @@ export async function reportTask(formData: FormData) {
     const { data: profile } = await supabaseAdmin.from('profiles').select('full_name').eq('id', userData.user.id).single()
     const name = profile?.full_name || 'Một người dùng'
     
-    await createGroupedNotification(task.created_by, taskId, `đã gửi báo cáo công việc: ${task.title}`, name, 'đã gửi báo cáo công việc')
+    await createGroupedNotification(task.created_by, taskId, `đã cập nhật trạng thái công việc: ${task.title}`, name, 'cập nhật trạng thái công việc')
     
     if (recipient?.forwarded_from && recipient.forwarded_from !== task.created_by) {
-      await createGroupedNotification(recipient.forwarded_from, taskId, `đã gửi báo cáo cho công việc được chuyển tiếp: ${task.title}`, name, 'đã gửi báo cáo cho công việc được chuyển tiếp')
+      await createGroupedNotification(recipient.forwarded_from, taskId, `đã cập nhật trạng thái công việc được chuyển tiếp: ${task.title}`, name, 'cập nhật trạng thái công việc')
     }
   }
 
@@ -224,7 +224,7 @@ export async function approveTask(taskId: string, targetUserId: string, targetUs
   if (task) {
     const { data: currentProfile } = await supabaseAdmin.from('profiles').select('full_name').eq('id', userData.user.id).single()
     const name = currentProfile?.full_name || 'Người giao'
-    await createGroupedNotification(targetUserId, taskId, `đã duyệt báo cáo của bạn cho công việc "${task.title}"`, name, 'đã duyệt báo cáo')
+    await createGroupedNotification(targetUserId, taskId, `đã cập nhật trạng thái công việc: ${task.title}`, name, 'cập nhật trạng thái công việc')
   }
 
   // Check if all recipients have completed
@@ -276,7 +276,7 @@ export async function rejectTask(taskId: string, targetUserId: string, targetUse
   if (task) {
     const { data: currentProfile } = await supabaseAdmin.from('profiles').select('full_name').eq('id', userData.user.id).single()
     const name = currentProfile?.full_name || 'Người giao'
-    await createGroupedNotification(targetUserId, taskId, `đã từ chối báo cáo của bạn cho công việc "${task.title}"`, name, 'đã từ chối báo cáo')
+    await createGroupedNotification(targetUserId, taskId, `đã cập nhật trạng thái công việc: ${task.title}`, name, 'cập nhật trạng thái công việc')
   }
 
   revalidatePath(`/tasks/${taskId}`)

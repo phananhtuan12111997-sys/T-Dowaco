@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button'
+import { SubmitButton } from '@/components/submit-button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -165,9 +166,9 @@ export default async function CreateMeetingPage() {
               <Button type="button" variant="outline" asChild className="border-slate-300 text-slate-700">
                 <Link href="/meetings">Hủy bỏ</Link>
               </Button>
-              <Button type="submit" className="bg-emerald-500 hover:bg-emerald-600 text-white px-8">
+              <SubmitButton className="bg-emerald-500 hover:bg-emerald-600 text-white px-8" loadingText="Đang tạo...">
                 Tạo lịch họp
-              </Button>
+              </SubmitButton>
             </div>
           </form>
         </div>

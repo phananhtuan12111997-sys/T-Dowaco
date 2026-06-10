@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button'
+import { SubmitButton } from '@/components/submit-button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -173,9 +174,9 @@ export default async function EditVehicleRequestPage({ params }: { params: { id:
               <Button type="button" variant="outline" asChild className="border-slate-300 text-slate-700">
                 <Link href="/vehicles">Hủy bỏ</Link>
               </Button>
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700 px-8">
+              <SubmitButton className="bg-blue-600 hover:bg-blue-700 px-8" loadingText="Đang lưu...">
                 Lưu thay đổi
-              </Button>
+              </SubmitButton>
             </div>
           </form>
         </div>
