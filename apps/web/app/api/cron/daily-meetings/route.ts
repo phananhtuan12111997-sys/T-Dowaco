@@ -1,16 +1,16 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Use service role key to bypass RLS when inserting notifications
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
+    // Use service role key to bypass RLS when inserting notifications
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+      process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+    );
+
     // Optional cron secret check to secure the endpoint
     const authHeader = request.headers.get('authorization');
     if (
