@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Clock, AlertCircle, FileText, CheckCircle2, MessageSquare, Send, CornerUpRight, XCircle, Download, Eye, X, Paperclip } from 'lucide-react'
+import { ArrowLeft, Clock, AlertCircle, FileText, CheckCircle2, MessageSquare, Send, CornerUpRight, XCircle, Download, Eye, X, Paperclip, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -45,6 +45,9 @@ export function TaskDetailClient({
   const [selectedRecipientId, setSelectedRecipientId] = useState<string | null>(null)
   const [selectedRecipientName, setSelectedRecipientName] = useState<string>('')
 
+  // Loading state
+  const [isActionLoading, setIsActionLoading] = useState(false)
+
   useEffect(() => {
     if (showForwardModal && forwardableUsers.length === 0) {
       getForwardableUsers().then(setForwardableUsers)
@@ -65,37 +68,57 @@ export function TaskDetailClient({
 
   const handleAccept = async () => {
     if (!currentUserRecipient) return
-    await acceptTask(task.id)
-    router.refresh()
+    setIsActionLoading(true)
+    try {
+      await acceptTask(task.id)
+      router.refresh()
+    } finally {
+      setIsActionLoading(false)
+    }
   }
 
   const handleReport = async () => {
     if (!reportContent.trim() && reportFiles.length === 0) return alert('Vui lòng nhập nội dung báo cáo hoặc đính kèm tệp')
-    const formData = new FormData()
-    formData.append('taskId', task.id)
-    formData.append('content', reportContent)
-    reportFiles.forEach(file => formData.append('attachments', file))
+    setIsActionLoading(true)
+    try {
+      const formData = new FormData()
+      formData.append('taskId', task.id)
+      formData.append('content', reportContent)
+      reportFiles.forEach(file => formData.append('attachments', file))
 
-    await reportTask(formData)
-    setShowReportModal(false)
-    setReportContent('')
-    setReportFiles([])
-    router.refresh()
+      await reportTask(formData)
+      setShowReportModal(false)
+      setReportContent('')
+      setReportFiles([])
+      router.refresh()
+    } finally {
+      setIsActionLoading(false)
+    }
   }
 
   const handleForward = async () => {
     if (selectedForwardUsers.length === 0) return alert('Vui lòng chọn người nhận')
-    await forwardTask(task.id, selectedForwardUsers, forwardNote)
-    setShowForwardModal(false)
-    setSelectedForwardUsers([])
-    setForwardNote('')
-    router.refresh()
+    setIsActionLoading(true)
+    try {
+      await forwardTask(task.id, selectedForwardUsers, forwardNote)
+      setShowForwardModal(false)
+      setSelectedForwardUsers([])
+      setForwardNote('')
+      router.refresh()
+    } finally {
+      setIsActionLoading(false)
+    }
   }
 
   const handleApprove = async (recipientId: string, recipientName: string) => {
     if (confirm(`Bạn có chắc chắn duyệt hoàn thành cho ${recipientName}?`)) {
-      await approveTask(task.id, recipientId, recipientName)
-      router.refresh()
+      setIsActionLoading(true)
+      try {
+        await approveTask(task.id, recipientId, recipientName)
+        router.refresh()
+      } finally {
+        setIsActionLoading(false)
+      }
     }
   }
 
@@ -118,25 +141,35 @@ export function TaskDetailClient({
   const handleReject = async () => {
     if (!rejectReason.trim()) return alert('Vui lòng nhập lý do trả về')
     if (selectedRecipientId) {
-      await rejectTask(task.id, selectedRecipientId, selectedRecipientName, rejectReason)
-      setShowRejectModal(false)
-      setRejectReason('')
-      setSelectedRecipientId(null)
-      router.refresh()
+      setIsActionLoading(true)
+      try {
+        await rejectTask(task.id, selectedRecipientId, selectedRecipientName, rejectReason)
+        setShowRejectModal(false)
+        setRejectReason('')
+        setSelectedRecipientId(null)
+        router.refresh()
+      } finally {
+        setIsActionLoading(false)
+      }
     }
   }
 
   const handleSendComment = async () => {
     if (!commentText.trim() && commentFiles.length === 0) return
-    const formData = new FormData()
-    formData.append('taskId', task.id)
-    formData.append('content', commentText)
-    commentFiles.forEach(file => formData.append('attachments', file))
-    
-    await addComment(formData)
-    setCommentText('')
-    setCommentFiles([])
-    router.refresh()
+    setIsActionLoading(true)
+    try {
+      const formData = new FormData()
+      formData.append('taskId', task.id)
+      formData.append('content', commentText)
+      commentFiles.forEach(file => formData.append('attachments', file))
+      
+      await addComment(formData)
+      setCommentText('')
+      setCommentFiles([])
+      router.refresh()
+    } finally {
+      setIsActionLoading(false)
+    }
   }
 
   const toggleForwardUser = (id: string) => {
@@ -181,8 +214,8 @@ export function TaskDetailClient({
             </Button>
           )}
           {currentUserRecipient && currentUserRecipient.processing_status === 'Chưa xử lý' && (
-            <Button onClick={handleAccept} className="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700">
-              <CheckCircle2 className="w-4 h-4 mr-2" /> Tiếp nhận
+            <Button onClick={handleAccept} disabled={isActionLoading} className="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700">
+              {isActionLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />} Tiếp nhận
             </Button>
           )}
 
@@ -503,8 +536,8 @@ export function TaskDetailClient({
                   <label htmlFor="comment-file-upload" className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center w-10 h-10 rounded">
                     <Paperclip className="w-4 h-4" />
                   </label>
-                  <Button onClick={handleSendComment} className="bg-blue-600 hover:bg-blue-700">
-                    <Send className="w-4 h-4" /> 
+                  <Button onClick={handleSendComment} disabled={isActionLoading} className="bg-blue-600 hover:bg-blue-700">
+                    {isActionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                   </Button>
                 </div>
               </div>
@@ -660,7 +693,9 @@ export function TaskDetailClient({
               </label>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => setShowReportModal(false)}>Hủy</Button>
-                <Button onClick={handleReport} className="bg-blue-600 hover:bg-blue-700">Gửi báo cáo</Button>
+                <Button onClick={handleReport} disabled={isActionLoading} className="bg-blue-600 hover:bg-blue-700">
+                  {isActionLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null} Gửi báo cáo
+                </Button>
               </div>
             </div>
           </div>
@@ -699,7 +734,9 @@ export function TaskDetailClient({
             />
             <div className="flex justify-end gap-3">
               <Button variant="outline" onClick={() => setShowForwardModal(false)}>Hủy</Button>
-              <Button onClick={handleForward} className="bg-blue-600 hover:bg-blue-700" disabled={selectedForwardUsers.length === 0}>Chuyển tiếp</Button>
+              <Button onClick={handleForward} disabled={isActionLoading || selectedForwardUsers.length === 0} className="bg-blue-600 hover:bg-blue-700">
+                {isActionLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null} Chuyển tiếp
+              </Button>
             </div>
           </div>
         </div>
@@ -717,7 +754,9 @@ export function TaskDetailClient({
             />
             <div className="flex justify-end gap-3">
               <Button variant="outline" onClick={() => setShowRejectModal(false)}>Hủy</Button>
-              <Button onClick={handleReject} className="bg-red-600 hover:bg-red-700">Xác nhận trả về</Button>
+              <Button onClick={handleReject} disabled={isActionLoading} className="bg-red-600 hover:bg-red-700">
+                {isActionLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null} Xác nhận trả về
+              </Button>
             </div>
           </div>
         </div>
@@ -780,7 +819,9 @@ export function TaskDetailClient({
               <Button variant="outline" onClick={() => setShowApproveReportModal(false)}>Đóng</Button>
               <div className="flex gap-2">
                 <Button onClick={() => { setShowApproveReportModal(false); openRejectModal(selectedRecipientId!, selectedRecipientName); }} variant="outline" className="border-red-200 text-red-600 hover:bg-red-50">Từ chối</Button>
-                <Button onClick={() => { setShowApproveReportModal(false); handleApprove(selectedRecipientId!, selectedRecipientName); }} className="bg-emerald-600 hover:bg-emerald-700">Hoàn thành</Button>
+                <Button onClick={() => { setShowApproveReportModal(false); handleApprove(selectedRecipientId!, selectedRecipientName); }} disabled={isActionLoading} className="bg-emerald-600 hover:bg-emerald-700">
+                  {isActionLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null} Hoàn thành
+                </Button>
               </div>
             </div>
           </div>
