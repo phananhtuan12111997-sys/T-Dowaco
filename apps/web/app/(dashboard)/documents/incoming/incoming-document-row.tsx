@@ -15,7 +15,7 @@ export function IncomingDocumentRow({ doc }: { doc: any }) {
     if (target.closest('button') || target.closest('a') || target.closest('.no-row-click')) {
       return
     }
-    router.push(`/documents/incoming/${doc.id}`)
+    router.push(`/documents/incoming/${doc.id}?from=incoming`)
   }
 
   return (
@@ -62,7 +62,7 @@ export function IncomingDocumentRow({ doc }: { doc: any }) {
       </td>
       <td className="px-6 py-4 text-center">
         <div className="no-row-click">
-          <Link href={`/documents/incoming/${doc.id}`} className="text-sm text-blue-600 hover:underline font-medium whitespace-nowrap">
+          <Link href={`/documents/incoming/${doc.id}?from=incoming`} className="text-sm text-blue-600 hover:underline font-medium whitespace-nowrap">
             Xem chi tiết
           </Link>
         </div>

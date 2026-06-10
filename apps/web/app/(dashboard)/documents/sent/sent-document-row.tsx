@@ -15,7 +15,7 @@ export function SentDocumentRow({ doc, currentUserId, isITAdmin }: { doc: any, c
     if (target.closest('button') || target.closest('a') || target.closest('.no-row-click')) {
       return
     }
-    router.push(`/documents/sent/${doc.id}`)
+    router.push(`/documents/sent/${doc.id}?from=sent`)
   }
 
   return (

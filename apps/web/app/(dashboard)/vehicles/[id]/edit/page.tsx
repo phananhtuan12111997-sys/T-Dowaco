@@ -19,6 +19,13 @@ export default async function EditVehicleRequestPage({ params }: { params: { id:
   
   const { data: { user } } = await supabase.auth.getUser()
 
+  if (!user) {
+    redirect('/login')
+  }
+
+  const { data: profile } = await supabase.from('profiles').select('department, is_admin').eq('id', user.id).single()
+  const isITAdmin = profile?.department === 'Phòng IT' || profile?.is_admin
+
   // Fetch the request
   const { data: request, error: reqError } = await supabase
     .from('vehicle_requests')
@@ -26,16 +33,15 @@ export default async function EditVehicleRequestPage({ params }: { params: { id:
     .eq('id', params.id)
     .single()
 
-  if (reqError || !request || request.created_by !== user?.id) {
+  if (reqError || !request || (request.created_by !== user.id && !isITAdmin)) {
     redirect('/vehicles')
   }
 
-  // Fetch approvers (Ban điều hành)
+  // Fetch approver (Nguyễn Văn Hoà)
   const { data: approvers } = await supabase
     .from('profiles')
-    .select('id, full_name, department')
-    .eq('department', 'Ban điều hành')
-    .order('full_name')
+    .select('id, full_name, department, username')
+    .eq('username', 'nguyenvanhoa')
 
   // Fetch all users for companions
   const { data: allUsers } = await supabase
@@ -69,7 +75,7 @@ export default async function EditVehicleRequestPage({ params }: { params: { id:
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
-        <span>T-Dowaco</span>
+        <span>LKW</span>
         <span>→</span>
         <Link href="/vehicles" className="hover:text-[#1a56db]">Quản lý xin xe</Link>
         <span>→</span>
@@ -98,7 +104,7 @@ export default async function EditVehicleRequestPage({ params }: { params: { id:
 
               <div className="space-y-2">
                 <Label htmlFor="approver_id" className="text-slate-700 font-semibold">Người duyệt <span className="text-red-500">*</span></Label>
-                <Select name="approver_id" required defaultValue={request.approver_id}>
+                <Select name="approver_id" required defaultValue={request.approver_id || approvers?.[0]?.id}>
                   <SelectTrigger className="bg-slate-50 border-slate-200">
                     <SelectValue placeholder="Chọn người duyệt" />
                   </SelectTrigger>

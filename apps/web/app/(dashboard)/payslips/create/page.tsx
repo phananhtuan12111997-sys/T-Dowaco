@@ -19,7 +19,7 @@ export default function CreatePayslipPage() {
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
-        <span>DOFFICE</span>
+        <span>LKW</span>
         <span>→</span>
         <Link href="/payslips" className="hover:text-[#1a56db]">Tra cứu lương</Link>
         <span>→</span>

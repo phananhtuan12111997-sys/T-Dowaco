@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 
 interface SubItem {
@@ -19,6 +19,7 @@ interface SidebarCollapsibleProps {
 
 export function SidebarCollapsible({ icon, text, items, basePath }: SidebarCollapsibleProps) {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
   // Mặc định mở nếu đường dẫn hiện tại bắt đầu bằng basePath
   const [isOpen, setIsOpen] = useState(pathname.startsWith(basePath))
 
@@ -38,7 +39,12 @@ export function SidebarCollapsible({ icon, text, items, basePath }: SidebarColla
       {isOpen && (
         <ul className="bg-[#1748b8] py-2">
           {items.map((item) => {
-            const isActive = pathname.startsWith(item.href) || (item.href === '/documents/incoming' && pathname === '/documents/create')
+            const fromParam = searchParams?.get('from')
+            const isTaskDetailMatch = pathname.startsWith('/tasks/') && fromParam && item.href === `/tasks/${fromParam}`
+            
+            const isActive = pathname.startsWith(item.href) || 
+                             (item.href === '/documents/incoming' && pathname === '/documents/create') ||
+                             isTaskDetailMatch
             return (
               <li key={item.href}>
                 <Link

@@ -17,9 +17,11 @@ import { createClient } from "@/utils/supabase/server";
 
 const inter = Inter({ subsets: ["latin"] });
 
+import { RealtimeListener } from "@/components/realtime-listener";
+
 export const metadata: Metadata = {
-  title: "T-Dowaco - T-Dowaco Workspace",
-  description: "Hệ thống quản trị nội bộ T-Dowaco",
+  title: "LKW - LKW Workspace",
+  description: "Hệ thống quản trị nội bộ LKW",
 };
 
 export default async function DashboardLayout({
@@ -35,17 +37,19 @@ export default async function DashboardLayout({
     const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
     profile = data;
   }
+  const isHR = profile?.department?.toLowerCase().includes('tổ chức') || profile?.department?.toLowerCase().includes('kế hoạch');
 
   return (
     <div className={`${inter.className} bg-slate-50 min-h-screen flex`}>
+      {user && <RealtimeListener userId={user.id} />}
       {/* Sidebar - hidden on mobile, visible on lg screens */}
       <aside className="w-64 bg-[#1a56db] text-white hidden lg:flex flex-col min-h-screen fixed left-0 top-0 z-20">
         <Link href="/" className="h-20 flex items-center justify-center gap-3 border-b border-blue-500/30 hover:bg-blue-800/40 transition-colors">
           <img src="/logo.png" alt="Logo" className="h-12 w-auto object-contain" />
-          <span className="font-bold text-xl tracking-wider">T-DOWACO</span>
+          <span className="font-bold text-xl tracking-wider">LKW</span>
         </Link>
         <nav className="flex-1 py-4">
-          <SidebarNav isAdmin={profile?.is_admin} />
+          <SidebarNav isAdmin={profile?.is_admin || isHR} />
         </nav>
       </aside>
 

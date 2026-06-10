@@ -6,11 +6,24 @@ import { createMeeting } from '../actions'
 import Link from 'next/link'
 import { ShieldAlert } from 'lucide-react'
 
-export default function CreateMeetingPage() {
+import { createClient } from '@/utils/supabase/server'
+import { redirect } from 'next/navigation'
+
+export default async function CreateMeetingPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { data: profile } = await supabase.from('profiles').select('department, is_admin').eq('id', user.id).single()
+  const isBanDieuHanh = profile?.department === 'Ban điều hành'
+  const isToChucHanhChanh = profile?.department === 'Phòng tổ chức Hành chánh'
+  const isFullAccess = profile?.is_admin || isBanDieuHanh || isToChucHanhChanh
+  const userDepartment = profile?.department || ''
+
   return (
     <div className="space-y-4 max-w-3xl mx-auto">
       <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
-        <Link href="/meetings" className="hover:text-[#1a56db] transition-colors">T-Dowaco</Link>
+        <Link href="/meetings" className="hover:text-[#1a56db] transition-colors">LKW</Link>
         <span>→</span>
         <Link href="/meetings" className="hover:text-[#1a56db]">Quản lý lịch họp</Link>
         <span>→</span>
@@ -89,42 +102,51 @@ export default function CreateMeetingPage() {
             <div className="space-y-2">
               <Label className="text-slate-700 font-semibold">Thành phần tham dự (Phòng ban)</Label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2 bg-slate-50 p-3 rounded-md border border-slate-200">
-                <div className="flex items-center space-x-2">
-                  <input type="checkbox" id="dept_all" name="departments" value="Tất cả" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4" />
-                  <label htmlFor="dept_all" className="text-sm font-medium leading-none cursor-pointer">Tất cả phòng ban</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input type="checkbox" id="dept_bdh" name="departments" value="Ban điều hành" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4" />
-                  <label htmlFor="dept_bdh" className="text-sm font-medium leading-none cursor-pointer">Ban điều hành</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input type="checkbox" id="dept_hc" name="departments" value="Phòng tổ chức Hành chánh" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4" />
-                  <label htmlFor="dept_hc" className="text-sm font-medium leading-none cursor-pointer">Phòng tổ chức Hành chánh</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input type="checkbox" id="dept_kt" name="departments" value="Phòng Tài chính Kế toán" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4" />
-                  <label htmlFor="dept_kt" className="text-sm font-medium leading-none cursor-pointer">Phòng Tài chính Kế toán</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input type="checkbox" id="dept_it" name="departments" value="Phòng IT" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4" />
-                  <label htmlFor="dept_it" className="text-sm font-medium leading-none cursor-pointer">Phòng IT</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input type="checkbox" id="dept_kh" name="departments" value="Phòng Kế hoạch Kỹ thuật" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4" />
-                  <label htmlFor="dept_kh" className="text-sm font-medium leading-none cursor-pointer">Phòng Kế hoạch Kỹ thuật</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input type="checkbox" id="dept_kd" name="departments" value="Phòng Kinh Doanh" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4" />
-                  <label htmlFor="dept_kd" className="text-sm font-medium leading-none cursor-pointer">Phòng Kinh Doanh</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input type="checkbox" id="dept_xl" name="departments" value="Đội xây lắp - Chống thất thoát" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4" />
-                  <label htmlFor="dept_xl" className="text-sm font-medium leading-none cursor-pointer">Đội xây lắp - Chống thất thoát</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input type="checkbox" id="dept_sx" name="departments" value="Phân xưởng sản xuất" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4" />
-                  <label htmlFor="dept_sx" className="text-sm font-medium leading-none cursor-pointer">Phân xưởng sản xuất</label>
-                </div>
+                {isFullAccess ? (
+                  <>
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="dept_all" name="departments" value="Tất cả" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4" />
+                      <label htmlFor="dept_all" className="text-sm font-medium leading-none cursor-pointer">Tất cả phòng ban</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="dept_bdh" name="departments" value="Ban điều hành" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4" />
+                      <label htmlFor="dept_bdh" className="text-sm font-medium leading-none cursor-pointer">Ban điều hành</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="dept_hc" name="departments" value="Phòng tổ chức Hành chánh" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4" />
+                      <label htmlFor="dept_hc" className="text-sm font-medium leading-none cursor-pointer">Phòng tổ chức Hành chánh</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="dept_kt" name="departments" value="Phòng Tài chính Kế toán" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4" />
+                      <label htmlFor="dept_kt" className="text-sm font-medium leading-none cursor-pointer">Phòng Tài chính Kế toán</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="dept_it" name="departments" value="Phòng IT" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4" />
+                      <label htmlFor="dept_it" className="text-sm font-medium leading-none cursor-pointer">Phòng IT</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="dept_kh" name="departments" value="Phòng Kế hoạch Kỹ thuật" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4" />
+                      <label htmlFor="dept_kh" className="text-sm font-medium leading-none cursor-pointer">Phòng Kế hoạch Kỹ thuật</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="dept_kd" name="departments" value="Phòng Kinh Doanh" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4" />
+                      <label htmlFor="dept_kd" className="text-sm font-medium leading-none cursor-pointer">Phòng Kinh Doanh</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="dept_xl" name="departments" value="Đội xây lắp - Chống thất thoát" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4" />
+                      <label htmlFor="dept_xl" className="text-sm font-medium leading-none cursor-pointer">Đội xây lắp - Chống thất thoát</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="dept_sx" name="departments" value="Phân xưởng sản xuất" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4" />
+                      <label htmlFor="dept_sx" className="text-sm font-medium leading-none cursor-pointer">Phân xưởng sản xuất</label>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <input type="checkbox" id="dept_own" name="departments" value={userDepartment} checked readOnly className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4 bg-slate-200 pointer-events-none" />
+                    <label htmlFor="dept_own" className="text-sm font-medium leading-none text-slate-700">{userDepartment}</label>
+                  </div>
+                )}
               </div>
             </div>
 

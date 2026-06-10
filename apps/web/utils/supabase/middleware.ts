@@ -19,9 +19,12 @@ export async function updateSession(request: NextRequest) {
           supabaseResponse = NextResponse.next({
             request,
           })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
+          cookiesToSet.forEach(({ name, value, options }) => {
+            const sessionOptions = { ...options }
+            delete sessionOptions.maxAge
+            delete sessionOptions.expires
+            supabaseResponse.cookies.set(name, value, sessionOptions)
+          })
         },
       },
     }
@@ -39,6 +42,7 @@ export async function updateSession(request: NextRequest) {
   if (!user && !isPublicPath) {
     // If no user and trying to access private route, redirect to login
     const url = request.nextUrl.clone()
+    url.searchParams.set('next', request.nextUrl.pathname + request.nextUrl.search)
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
@@ -47,7 +51,7 @@ export async function updateSession(request: NextRequest) {
     // Fetch user profile to check force_password_change and is_admin
     const { data: profile } = await supabase
       .from('profiles')
-      .select('force_password_change, is_admin')
+      .select('force_password_change, is_admin, department, role')
       .eq('id', user.id)
       .single()
 
@@ -60,10 +64,44 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url)
     }
 
-    // Prevent access to /hr if not admin
-    if (path.startsWith('/hr') && profile?.is_admin !== true) {
+    const isHR = profile?.department?.toLowerCase().includes('tổ chức') || profile?.department?.toLowerCase().includes('kế hoạch')
+    const isAccountant = profile?.department?.toLowerCase().includes('kế toán')
+    const isAdmin = profile?.is_admin === true
+    const canManageHR = isAdmin || isHR
+    const canPostNews = isAdmin || isHR
+    const canCreatePayslip = isAdmin || isAccountant
+
+    const isBanDieuHanh = profile?.department === 'Ban điều hành'
+    const isToChucHanhChanh = profile?.department === 'Phòng tổ chức Hành chánh'
+    const allowedMeetingRoles = ['Kế toán trưởng', 'Trưởng phòng', 'Phó phòng', 'Đội trưởng', 'Đội phó', 'Quản đốc', 'Phó quản đốc']
+    const hasAllowedMeetingRole = allowedMeetingRoles.includes(profile?.role || '')
+    const canManageMeetings = isAdmin || isBanDieuHanh || isToChucHanhChanh || hasAllowedMeetingRole
+
+    // Prevent access to /hr if not admin or HR
+    if (path.startsWith('/hr') && !canManageHR) {
       const url = request.nextUrl.clone()
       url.pathname = '/'
+      return NextResponse.redirect(url)
+    }
+
+    // Prevent access to /news/create if not admin or HR
+    if (path.startsWith('/news/create') && !canPostNews) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/news'
+      return NextResponse.redirect(url)
+    }
+
+    // Prevent access to /payslips/create if not admin or Accountant
+    if (path.startsWith('/payslips/create') && !canCreatePayslip) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/payslips'
+      return NextResponse.redirect(url)
+    }
+
+    // Prevent access to /meetings/create and /meetings/edit if not allowed
+    if ((path.startsWith('/meetings/create') || path.startsWith('/meetings/edit')) && !canManageMeetings) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/meetings'
       return NextResponse.redirect(url)
     }
 

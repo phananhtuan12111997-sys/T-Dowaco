@@ -4,7 +4,7 @@ import { CreateDocumentForm } from './create-document-form'
 import { getUsers } from './actions'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
-import { getDocumentDetails } from '../incoming/[id]/actions'
+import { getDocumentDetails } from '../workflow-actions'
 
 export default async function CreateDocumentPage({
   searchParams

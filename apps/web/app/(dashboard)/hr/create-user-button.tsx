@@ -81,7 +81,7 @@ export function CreateUserButton() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="username">Tài khoản (Bắt buộc)</Label>
-              <Input id="username" name="username" required placeholder="VD: nguyenvana" autoComplete="off" />
+              <Input id="username" name="username" required placeholder="VD: nguyenvana" autoComplete="off" pattern="^[a-zA-Z0-9_]+$" title="Chỉ chứa chữ cái không dấu, số và gạch dưới" onInput={(e) => { e.currentTarget.value = e.currentTarget.value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9_]/g, '') }} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Mật khẩu khởi tạo (Bắt buộc)</Label>
@@ -92,7 +92,7 @@ export function CreateUserButton() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="full_name">Họ và tên (Bắt buộc)</Label>
-              <Input id="full_name" name="full_name" required placeholder="VD: Nguyễn Văn A" />
+              <Input id="full_name" name="full_name" required placeholder="VD: Nguyễn Văn A" pattern="^[^0-9]+$" title="Không được chứa chữ số" onInput={(e) => { e.currentTarget.value = e.currentTarget.value.replace(/[0-9]/g, '') }} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="gender">Giới tính</Label>
@@ -153,14 +153,36 @@ export function CreateUserButton() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Số điện thoại</Label>
-              <Input id="phone" name="phone" placeholder="Tùy chọn" />
+              <Input id="phone" name="phone" placeholder="Tùy chọn" pattern="^[0-9]+$" title="Chỉ được nhập số" onInput={(e) => { e.currentTarget.value = e.currentTarget.value.replace(/[^0-9]/g, '') }} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="cccd">CCCD/CMND</Label>
+              <Input id="cccd" name="cccd" placeholder="Tùy chọn" pattern="^[0-9]+$" title="Chỉ được nhập số" onInput={(e) => { e.currentTarget.value = e.currentTarget.value.replace(/[^0-9]/g, '') }} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="hometown">Quê quán</Label>
+              <Input id="hometown" name="hometown" placeholder="Tùy chọn" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="social_insurance_number">Số bảo hiểm (BHXH)</Label>
+              <Input id="social_insurance_number" name="social_insurance_number" placeholder="Tùy chọn" pattern="^[0-9]+$" title="Chỉ được nhập số" onInput={(e) => { e.currentTarget.value = e.currentTarget.value.replace(/[^0-9]/g, '') }} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="health_insurance_number">Số thẻ BHYT</Label>
+              <Input id="health_insurance_number" name="health_insurance_number" placeholder="Tùy chọn" pattern="^[0-9]+$" title="Chỉ được nhập số" onInput={(e) => { e.currentTarget.value = e.currentTarget.value.replace(/[^0-9]/g, '') }} />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email liên hệ</Label>
-              <Input id="email" name="email" type="email" placeholder="Tùy chọn" />
+              <Input id="email" name="email" type="email" placeholder="Tùy chọn" pattern=".*@.*" title="Email phải có ký tự @" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="address">Địa chỉ</Label>

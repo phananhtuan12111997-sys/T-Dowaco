@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Bell, BellOff } from 'lucide-react'
+import { Bell, BellOff, Calendar, Car, Briefcase, FileText, MessageSquare } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { getNotifications, getUnreadCount, markAsRead, markAllAsRead } from '@/app/actions/notifications'
@@ -17,6 +17,29 @@ type Notification = {
   is_read: boolean
   created_at: string
   document_id: string
+}
+
+const getNotificationStyle = (message: string) => {
+  const msg = message.toLowerCase()
+  if (msg.includes('lịch họp')) {
+    return { icon: <Calendar className="w-5 h-5 text-indigo-600" />, bgClass: 'bg-indigo-100' }
+  }
+  if (msg.includes('xin xe') || msg.includes('đăng ký xe') || msg.includes('chuyến đi xe')) {
+    return { icon: <Car className="w-5 h-5 text-emerald-600" />, bgClass: 'bg-emerald-100' }
+  }
+  if (msg.includes('công việc')) {
+    if (msg.includes('bình luận') || msg.includes('báo cáo')) {
+      return { icon: <MessageSquare className="w-5 h-5 text-amber-600" />, bgClass: 'bg-amber-100' }
+    }
+    return { icon: <Briefcase className="w-5 h-5 text-blue-600" />, bgClass: 'bg-blue-100' }
+  }
+  if (msg.includes('công văn')) {
+    if (msg.includes('bình luận') || msg.includes('báo cáo')) {
+      return { icon: <MessageSquare className="w-5 h-5 text-amber-600" />, bgClass: 'bg-amber-100' }
+    }
+    return { icon: <FileText className="w-5 h-5 text-purple-600" />, bgClass: 'bg-purple-100' }
+  }
+  return { icon: <Bell className="w-5 h-5 text-slate-600" />, bgClass: 'bg-slate-100' }
 }
 
 export function NotificationBell() {
@@ -56,19 +79,40 @@ export function NotificationBell() {
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'notifications',
           filter: `user_id=eq.${userId}`
         },
         (payload) => {
-          const newNotif = payload.new as Notification
-          setNotifications(prev => [newNotif, ...prev])
-          setUnreadCount(prev => {
-            const newCount = prev + 1
-            unreadCountRef.current = newCount
-            return newCount
-          })
+          if (payload.eventType === 'INSERT') {
+            const newNotif = payload.new as Notification
+            setNotifications(prev => [newNotif, ...prev])
+            setUnreadCount(prev => {
+              const newCount = prev + 1
+              unreadCountRef.current = newCount
+              return newCount
+            })
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedNotif = payload.new as Notification
+            setNotifications(prev => {
+              const exists = prev.find(n => n.id === updatedNotif.id)
+              if (exists) {
+                return prev.map(n => n.id === updatedNotif.id ? updatedNotif : n)
+              } else {
+                return [updatedNotif, ...prev]
+              }
+            })
+            // If it was read but now unread, increase count
+            const oldNotif = payload.old as any
+            if (oldNotif && oldNotif.is_read && !updatedNotif.is_read) {
+              setUnreadCount(prev => {
+                const newCount = prev + 1
+                unreadCountRef.current = newCount
+                return newCount
+              })
+            }
+          }
         }
       )
       .subscribe()
@@ -129,7 +173,11 @@ export function NotificationBell() {
     }
 
     if (notif.message.includes('Lịch họp')) {
-      router.push(`/meetings`)
+      if (notif.document_id) {
+        router.push(`/meetings/${notif.document_id}`)
+      } else {
+        router.push(`/meetings`)
+      }
       return
     }
 
@@ -145,6 +193,14 @@ export function NotificationBell() {
 
     if (notif.message.includes('trả lời/báo cáo')) {
       router.push(`/documents/sent/${notif.document_id}`)
+    } else if (notif.message.toLowerCase().includes('công việc')) {
+      if (notif.message.includes('gửi báo cáo')) {
+        router.push(`/tasks/${notif.document_id}?action=approve`)
+      } else if (notif.message.includes('bình luận')) {
+        router.push(`/tasks/${notif.document_id}?action=comment`)
+      } else {
+        router.push(`/tasks/${notif.document_id}`)
+      }
     } else {
       router.push(`/documents/incoming/${notif.document_id}`)
     }
@@ -209,8 +265,8 @@ export function NotificationBell() {
                       onClick={() => handleNotificationClick(n)}
                       className={`px-4 py-3 hover:bg-slate-50 cursor-pointer flex gap-3 transition-colors ${!n.is_read ? 'bg-blue-50/30' : ''}`}
                     >
-                      <div className="w-10 h-10 rounded-full bg-[#1a56db]/10 flex items-center justify-center flex-shrink-0">
-                        <Bell className="w-5 h-5 text-[#1a56db]" />
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${getNotificationStyle(n.message).bgClass}`}>
+                        {getNotificationStyle(n.message).icon}
                       </div>
                       <div className="flex-1 space-y-1">
                         <p className={`text-sm line-clamp-2 ${!n.is_read ? 'font-semibold text-slate-800' : 'text-slate-600'}`}>
@@ -239,8 +295,8 @@ export function NotificationBell() {
                       onClick={() => handleNotificationClick(n)}
                       className={`px-4 py-3 hover:bg-slate-50 cursor-pointer flex gap-3 transition-colors ${!n.is_read ? 'bg-blue-50/30' : ''}`}
                     >
-                      <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
-                        <Bell className="w-5 h-5 text-slate-500" />
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${getNotificationStyle(n.message).bgClass}`}>
+                        {getNotificationStyle(n.message).icon}
                       </div>
                       <div className="flex-1 space-y-1">
                         <p className={`text-sm line-clamp-2 ${!n.is_read ? 'font-semibold text-slate-800' : 'text-slate-600'}`}>

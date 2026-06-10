@@ -26,8 +26,11 @@ export default async function EditMeetingPage({ params }: { params: Promise<{ id
     notFound()
   }
 
-  // Only creator can edit
-  if (meeting.created_by !== user.id) {
+  const { data: profile } = await supabase.from('profiles').select('department, is_admin').eq('id', user.id).single()
+  const isITAdmin = profile?.department === 'Phòng IT' || profile?.is_admin
+
+  // Only creator or ITAdmin can edit
+  if (meeting.created_by !== user.id && !isITAdmin) {
     redirect('/meetings')
   }
 
@@ -50,7 +53,7 @@ export default async function EditMeetingPage({ params }: { params: Promise<{ id
   return (
     <div className="space-y-4 max-w-3xl mx-auto">
       <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
-        <Link href="/meetings" className="hover:text-[#1a56db] transition-colors">T-Dowaco</Link>
+        <Link href="/meetings" className="hover:text-[#1a56db] transition-colors">LKW</Link>
         <span>→</span>
         <Link href="/meetings" className="hover:text-[#1a56db]">Quản lý lịch họp</Link>
         <span>→</span>

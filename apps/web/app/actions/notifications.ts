@@ -73,3 +73,78 @@ export async function markAllAsRead() {
   }
   return { success: false }
 }
+
+export async function createNotification(userId: string, message: string, documentId: string) {
+  // Use service role to bypass RLS when creating notifications from server actions
+  const supabaseAdmin = require('@supabase/supabase-js').createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+  
+  const { error } = await supabaseAdmin
+    .from('notifications')
+    .insert({
+      user_id: userId,
+      message,
+      document_id: documentId,
+      is_read: false
+    })
+    
+  return { error }
+}
+
+export async function createGroupedNotification(
+  userId: string,
+  documentId: string,
+  baseMessage: string,
+  actorName: string,
+  typeKeyword: string
+) {
+  const supabaseAdmin = require('@supabase/supabase-js').createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  const { data: existing } = await supabaseAdmin
+    .from('notifications')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('document_id', documentId)
+    .eq('is_read', false)
+    .ilike('message', `%${typeKeyword}%`)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (existing) {
+    if (existing.message.includes(actorName)) {
+      await supabaseAdmin.from('notifications').update({
+        is_read: false,
+        created_at: new Date().toISOString()
+      }).eq('id', existing.id)
+      return { error: null }
+    }
+
+    let newCount = 1
+    const match = existing.message.match(/và (\d+) người khác/)
+    if (match) {
+      newCount = parseInt(match[1], 10) + 1
+    }
+
+    const newMessage = `${actorName} và ${newCount} người khác ${baseMessage}`
+    const { error } = await supabaseAdmin.from('notifications').update({
+      message: newMessage,
+      is_read: false,
+      created_at: new Date().toISOString()
+    }).eq('id', existing.id)
+    return { error }
+  } else {
+    const { error } = await supabaseAdmin.from('notifications').insert({
+      user_id: userId,
+      message: `${actorName} ${baseMessage}`,
+      document_id: documentId,
+      is_read: false
+    })
+    return { error }
+  }
+}

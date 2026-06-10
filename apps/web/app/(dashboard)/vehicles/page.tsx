@@ -11,6 +11,7 @@ export default async function VehiclesPage(props: any) {
   
   const isBanDieuHanh = profile?.department === 'Ban điều hành'
   const isITAdmin = profile?.department === 'Phòng IT' || profile?.is_admin
+  const isHR = profile?.department?.toLowerCase().includes('tổ chức') || profile?.department?.toLowerCase().includes('kế hoạch')
 
   const page = searchParams.page ? parseInt(searchParams.page as string) : 1
   const limit = 10
@@ -23,7 +24,7 @@ export default async function VehiclesPage(props: any) {
     .order('created_at', { ascending: false })
     .range(from, to)
 
-  if (!isITAdmin) {
+  if (!isITAdmin && !isHR) {
     if (isBanDieuHanh) {
       query = query.or(`created_by.eq.${user?.id},approver_id.eq.${user?.id},companions.cs.["${user?.id}"]`)
     } else {

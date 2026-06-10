@@ -88,7 +88,7 @@ export function PasswordForm() {
             </div>
           </div>
 
-          <Button type="submit" disabled={loading} className="w-full bg-slate-800 hover:bg-slate-900">
+          <Button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700">
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Đổi mật khẩu
           </Button>

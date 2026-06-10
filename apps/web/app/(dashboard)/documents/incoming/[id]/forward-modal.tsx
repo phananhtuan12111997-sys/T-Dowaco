@@ -9,7 +9,7 @@ import {
 import { Search, X, Users, Forward } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { forwardDocument } from './actions'
+import { forwardDocument } from '../../workflow-actions'
 
 interface User {
   id: string

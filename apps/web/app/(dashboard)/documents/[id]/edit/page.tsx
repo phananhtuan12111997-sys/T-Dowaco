@@ -31,8 +31,15 @@ export default async function EditDocumentPage({ params }: { params: Promise<{ i
     notFound()
   }
 
-  // Security check: Only the sender can edit
-  if (doc.created_by !== userData.user.id) {
+  // Fetch profile
+  const { data: profile } = await supabaseAdmin
+    .from('profiles')
+    .select('is_admin')
+    .eq('id', userData.user.id)
+    .single()
+
+  // Security check: Only the sender or Admin can edit
+  if (doc.created_by !== userData.user.id && !profile?.is_admin) {
     redirect('/documents/sent')
   }
 

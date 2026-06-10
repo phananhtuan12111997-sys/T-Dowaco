@@ -71,9 +71,14 @@ export async function createNews(formData: FormData) {
   // Lấy thông tin user profile
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name')
+    .select('full_name, department, is_admin')
     .eq('id', user.id)
     .single()
+
+  const isHR = profile?.department?.toLowerCase().includes('tổ chức') || profile?.department?.toLowerCase().includes('kế hoạch')
+  if (!profile?.is_admin && !isHR) {
+    throw new Error('Bạn không có quyền đăng bản tin')
+  }
 
   const author_name = profile?.full_name || 'Người dùng ẩn danh'
 
@@ -359,7 +364,10 @@ export async function editNews(newsId: string, formData: FormData) {
   if (!user) return { error: 'Unauthorized' }
 
   const { data: news } = await supabase.from('news').select('author_id').eq('id', newsId).single()
-  if (!news || news.author_id !== user.id) {
+  const { data: profile } = await supabase.from('profiles').select('department, is_admin').eq('id', user.id).single()
+  const isITAdmin = profile?.department === 'Phòng IT' || profile?.is_admin
+
+  if (!news || (news.author_id !== user.id && !isITAdmin)) {
     return { error: 'Forbidden' }
   }
 
@@ -396,7 +404,10 @@ export async function editComment(commentId: string, content: string) {
   if (!user) return { error: 'Unauthorized' }
 
   const { data: comment } = await supabase.from('news_comments').select('*').eq('id', commentId).single()
-  if (!comment || comment.user_id !== user.id) {
+  const { data: profile } = await supabase.from('profiles').select('department, is_admin').eq('id', user.id).single()
+  const isITAdmin = profile?.department === 'Phòng IT' || profile?.is_admin
+
+  if (!comment || (comment.user_id !== user.id && !isITAdmin)) {
     return { error: 'Forbidden' }
   }
 

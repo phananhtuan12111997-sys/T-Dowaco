@@ -9,10 +9,63 @@ import {
   Car, 
   Banknote,
   Bell,
-  User
+  User,
+  Users
 } from "lucide-react";
+import { createClient } from "@/utils/supabase/server";
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  let tasksCount = 0;
+  let documentsCount = 0;
+  let meetingsCount = 0;
+  let canAccessHR = false;
+
+  if (user) {
+    const { data: profile } = await supabase.from('profiles').select('is_admin, department').eq('id', user.id).single();
+    
+    const isHR = profile?.department?.toLowerCase().includes('tổ chức') || profile?.department?.toLowerCase().includes('kế hoạch');
+    canAccessHR = profile?.is_admin || isHR;
+
+    // 1. Công việc chưa xử lý
+    const { count: tCount } = await supabase
+      .from('task_recipients')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .in('processing_status', ['Chưa xử lý', 'Đang thực hiện']);
+    tasksCount = tCount || 0;
+
+    // 2. Công văn chưa xử lý
+    const { count: dCount } = await supabase
+      .from('document_recipients')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('processing_status', 'Chưa xử lý');
+    documentsCount = dCount || 0;
+
+    // 3. Cuộc họp trong ngày
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const { data: meetingsTodayData } = await supabase
+      .from('meetings')
+      .select('created_by, departments, start_time')
+      .gte('start_time', startOfDay.toISOString())
+      .lte('start_time', endOfDay.toISOString());
+
+    meetingsCount = (meetingsTodayData || []).filter((m: any) => {
+      if (m.created_by === user.id) return true;
+      if (!m.departments || m.departments.length === 0) return true;
+      if (m.departments.includes('Tất cả')) return true;
+      if (profile?.department && m.departments.includes(profile.department)) return true;
+      return false;
+    }).length;
+  }
+
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
@@ -22,14 +75,14 @@ export default function Home() {
             Xin chào! Chúc bạn một ngày làm việc vui vẻ và hiệu quả! 👋
           </h2>
           <p className="text-slate-600 text-sm">
-            Bạn có <span className="font-bold text-red-500">0</span> công việc cần xử lý và <span className="font-bold text-red-500">0</span> lịch họp trong hôm nay.
+            Bạn có <span className="font-bold text-red-500">{documentsCount}</span> công văn chưa xử lý, <span className="font-bold text-red-500">{tasksCount}</span> công việc chưa xử lý và <span className="font-bold text-red-500">{meetingsCount}</span> lịch họp trong hôm nay.
           </p>
         </div>
         <RealTimeClock />
       </div>
 
       {/* Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mt-8">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
         <DashboardCard 
           href="/documents" 
           icon={<FileText size={32} className="text-blue-500" />} 
@@ -66,6 +119,14 @@ export default function Home() {
           title="Phiếu Lương" 
           description="Tra cứu thu nhập cá nhân" 
         />
+        {canAccessHR && (
+          <DashboardCard 
+            href="/hr" 
+            icon={<Users size={32} className="text-indigo-500" />} 
+            title="Nhân Sự" 
+            description="Quản lý nhân sự" 
+          />
+        )}
       </div>
     </div>
   );

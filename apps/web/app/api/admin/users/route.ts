@@ -13,11 +13,13 @@ export async function POST(request: Request) {
 
     const { data: profile } = await supabaseServer
       .from('profiles')
-      .select('is_admin')
+      .select('is_admin, department')
       .eq('id', user.id)
       .single()
+      
+    const isHR = profile?.department?.toLowerCase().includes('tổ chức') || profile?.department?.toLowerCase().includes('kế hoạch')
 
-    if (!profile?.is_admin) {
+    if (!profile?.is_admin && !isHR) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -32,6 +34,10 @@ export async function POST(request: Request) {
     const email = formData.get('email') as string
     const address = formData.get('address') as string
     const avatar = formData.get('avatar') as File | null
+    const cccd = formData.get('cccd') as string | null
+    const hometown = formData.get('hometown') as string | null
+    const social_insurance_number = formData.get('social_insurance_number') as string | null
+    const health_insurance_number = formData.get('health_insurance_number') as string | null
 
     // Validate required fields
     if (!username || !password || !full_name || !department || !role) {
@@ -99,6 +105,10 @@ export async function POST(request: Request) {
         address,
         gender,
         avatar_url,
+        cccd,
+        hometown,
+        social_insurance_number,
+        health_insurance_number,
         is_admin: false,
         force_password_change: true // Force password change on first login
       })

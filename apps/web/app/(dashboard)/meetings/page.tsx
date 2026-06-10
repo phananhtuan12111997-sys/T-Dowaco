@@ -34,8 +34,14 @@ export default async function MeetingsPage({
   let isITAdmin = false
   if (user) {
     const { data: profile } = await supabase.from('profiles').select('role, is_admin, department').eq('id', user.id).single()
-    if (profile && (profile.role !== 'Nhân viên' || profile.is_admin)) {
-      isAllowed = true
+    if (profile) {
+      const allowedRoles = ['Kế toán trưởng', 'Trưởng phòng', 'Phó phòng', 'Đội trưởng', 'Đội phó', 'Quản đốc', 'Phó quản đốc']
+      const isBanDieuHanh = profile.department === 'Ban điều hành'
+      const isToChucHanhChanh = profile.department === 'Phòng tổ chức Hành chánh'
+      
+      if (profile.is_admin || isBanDieuHanh || isToChucHanhChanh || allowedRoles.includes(profile.role)) {
+        isAllowed = true
+      }
     }
     if (profile && (profile.department === 'Phòng IT' || profile.is_admin)) {
       isITAdmin = true
@@ -87,7 +93,7 @@ export default async function MeetingsPage({
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
-            <Link href="/meetings" className="hover:text-blue-600 transition-colors">T-Dowaco</Link>
+            <Link href="/meetings" className="hover:text-blue-600 transition-colors">LKW</Link>
             <span>→</span>
             <span>Quản lý lịch họp</span>
           </div>
@@ -257,7 +263,7 @@ export default async function MeetingsPage({
                           <td className="px-6 py-4 text-right">
                             {user && (meeting.created_by === user.id || isITAdmin) && (
                               <div className="flex items-center justify-end gap-2">
-                                {meeting.created_by === user.id && (
+                                {user && (meeting.created_by === user.id || isITAdmin) && (
                                   <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" asChild>
                                     <Link href={`/meetings/edit/${meeting.id}`}>
                                       <Pencil className="h-4 w-4" />

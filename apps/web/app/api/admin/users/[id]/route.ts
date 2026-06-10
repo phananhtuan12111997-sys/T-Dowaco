@@ -9,8 +9,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { data: profile } = await supabaseServer.from('profiles').select('is_admin').eq('id', user.id).single()
-    if (!profile?.is_admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    const { data: profile } = await supabaseServer.from('profiles').select('is_admin, department').eq('id', user.id).single()
+    const isHR = profile?.department?.toLowerCase().includes('tổ chức') || profile?.department?.toLowerCase().includes('kế hoạch')
+    if (!profile?.is_admin && !isHR) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const resolvedParams = await params
     const targetUserId = resolvedParams.id
@@ -26,6 +27,10 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     const email = formData.get('email') as string
     const address = formData.get('address') as string
     const avatar = formData.get('avatar') as File | null
+    const cccd = formData.get('cccd') as string | null
+    const hometown = formData.get('hometown') as string | null
+    const social_insurance_number = formData.get('social_insurance_number') as string | null
+    const health_insurance_number = formData.get('health_insurance_number') as string | null
 
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -53,7 +58,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     }
 
     // Update Profile
-    const updateData: any = { full_name, department, role, phone, email, address, gender }
+    const updateData: any = { full_name, department, role, phone, email, address, gender, cccd, hometown, social_insurance_number, health_insurance_number }
     if (avatar_url) updateData.avatar_url = avatar_url
     if (password && password.trim().length > 0) updateData.force_password_change = true
 
@@ -77,8 +82,9 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { data: profile } = await supabaseServer.from('profiles').select('is_admin').eq('id', user.id).single()
-    if (!profile?.is_admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    const { data: profile } = await supabaseServer.from('profiles').select('is_admin, department').eq('id', user.id).single()
+    const isHR = profile?.department?.toLowerCase().includes('tổ chức') || profile?.department?.toLowerCase().includes('kế hoạch')
+    if (!profile?.is_admin && !isHR) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const resolvedParams = await params
     const targetUserId = resolvedParams.id

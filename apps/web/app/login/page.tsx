@@ -40,6 +40,11 @@ export default function LoginPage() {
       localStorage.removeItem('tdowaco_password')
     }
 
+    const nextPath = new URLSearchParams(window.location.search).get('next')
+    if (nextPath) {
+      formData.append('next', nextPath)
+    }
+
     const result = await login(formData)
     if (result?.error) {
       setError(result.error)
@@ -49,10 +54,13 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <Card className="w-full max-w-md shadow-lg border-slate-200">
-        <CardHeader className="space-y-1 text-center bg-[#1e293b] text-white rounded-t-xl mb-6 pb-8 pt-8">
-          <CardTitle className="text-3xl font-bold tracking-wider">T-DOWACO</CardTitle>
-          <CardDescription className="text-slate-300">
+      <Card className="w-full max-w-[500px] shadow-lg border-slate-200">
+        <CardHeader className="flex flex-col items-center space-y-4 text-center bg-blue-700 text-white rounded-t-xl mb-6 pb-8 pt-6 px-2">
+          <div className="w-32 h-32 bg-white rounded-full p-2 flex items-center justify-center shadow-md">
+            <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
+          </div>
+          <CardTitle className="text-base sm:text-lg md:text-[20px] font-bold tracking-wide whitespace-nowrap">CÔNG TY CỔ PHẦN CẤP NƯỚC LONG KHÁNH</CardTitle>
+          <CardDescription className="text-blue-100 font-medium text-sm mt-1">
             Hệ thống Văn phòng điện tử
           </CardDescription>
         </CardHeader>
@@ -117,7 +125,7 @@ export default function LoginPage() {
           </form>
         </CardContent>
         <CardFooter className="flex justify-center border-t border-slate-100 pt-4 mt-2">
-          <p className="text-sm text-slate-500 text-center cursor-pointer hover:underline" onClick={() => alert('Vui lòng liên hệ Admin (Phòng Nhân sự) để được cấp lại mật khẩu.')}>
+          <p className="text-sm text-slate-500 text-center cursor-pointer hover:underline" onClick={() => alert('Vui lòng liên hệ Admin để được cấp lại mật khẩu.')}>
             Quên mật khẩu?
           </p>
         </CardFooter>

@@ -2,9 +2,9 @@
 
 import React, { useState, useTransition, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { Plus, Search, User, Eye, CheckCircle, XCircle, ChevronLeft, ChevronRight, Edit, Trash2 } from 'lucide-react'
+import { Plus, Search, User, Eye, CheckCircle, XCircle, ChevronLeft, ChevronRight, Edit, Trash2, Loader2 } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { updateVehicleRequestStatus, deleteVehicleRequest } from './actions'
-import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { createClient } from '@/utils/supabase/client'
@@ -37,6 +37,7 @@ export function VehicleClient({ requests, isBanDieuHanh, currentUserId, usersMap
   const [localRequests, setLocalRequests] = useState<any[]>(requests || [])
   const [isPending, startTransition] = useTransition()
   const searchParams = useSearchParams()
+  const router = useRouter()
 
   useEffect(() => {
     setLocalRequests(requests || [])
@@ -94,6 +95,7 @@ export function VehicleClient({ requests, isBanDieuHanh, currentUserId, usersMap
         await updateVehicleRequestStatus(id, status)
         alert(`Đã cập nhật trạng thái thành: ${status}`)
         setSelectedReq((prev: any) => ({ ...prev, status }))
+        router.refresh()
       } catch (error: any) {
         alert(error.message)
       }
@@ -108,6 +110,7 @@ export function VehicleClient({ requests, isBanDieuHanh, currentUserId, usersMap
       try {
         await deleteVehicleRequest(id)
         alert('Đã xóa đơn thành công!')
+        router.refresh()
       } catch (error: any) {
         alert(error.message)
       }
@@ -134,7 +137,7 @@ export function VehicleClient({ requests, isBanDieuHanh, currentUserId, usersMap
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
-            <span>T-Dowaco</span>
+            <span>LKW</span>
             <span>→</span>
             <span>Quản lý xin xe</span>
           </div>
@@ -233,7 +236,7 @@ export function VehicleClient({ requests, isBanDieuHanh, currentUserId, usersMap
                           Xem
                         </Button>
                         
-                        {currentUserId === req.created_by && req.status === 'Chờ duyệt' && (
+                        {((currentUserId === req.created_by && req.status === 'Chờ duyệt') || isITAdmin) && (
                           <Button 
                             variant="ghost" 
                             size="sm"
@@ -398,7 +401,7 @@ export function VehicleClient({ requests, isBanDieuHanh, currentUserId, usersMap
                 </div>
               )}
 
-              {isBanDieuHanh && selectedReq.status === 'Chờ duyệt' && (
+              {(isBanDieuHanh || isITAdmin) && selectedReq.status === 'Chờ duyệt' && (
                 <div className="pt-4 border-t flex items-center justify-end gap-3 mt-4">
                   <Button 
                     variant="outline" 
@@ -406,14 +409,14 @@ export function VehicleClient({ requests, isBanDieuHanh, currentUserId, usersMap
                     disabled={isPending}
                     onClick={() => handleUpdateStatus(selectedReq.id, 'Từ chối')}
                   >
-                    <XCircle className="mr-2 h-4 w-4" /> Từ chối
+                    {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <XCircle className="mr-2 h-4 w-4" />} Từ chối
                   </Button>
                   <Button 
                     className="bg-emerald-600 hover:bg-emerald-700 text-white"
                     disabled={isPending}
                     onClick={() => handleUpdateStatus(selectedReq.id, 'Đã duyệt')}
                   >
-                    <CheckCircle className="mr-2 h-4 w-4" /> Phê duyệt
+                    {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />} Phê duyệt
                   </Button>
                 </div>
               )}

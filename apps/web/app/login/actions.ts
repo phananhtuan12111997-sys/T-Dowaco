@@ -9,6 +9,7 @@ export async function login(formData: FormData) {
   
   const username = formData.get('username') as string
   const password = formData.get('password') as string
+  const nextPath = formData.get('next') as string || '/'
 
   // We append a fake domain to use Supabase's email auth with a custom username
   const email = username.includes('@') ? username : `${username}@tdowaco.vn`
@@ -23,5 +24,5 @@ export async function login(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
-  redirect('/')
+  redirect(nextPath)
 }

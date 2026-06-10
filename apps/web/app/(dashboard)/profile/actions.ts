@@ -16,6 +16,10 @@ export async function updateProfile(formData: FormData) {
   const email = formData.get('email') as string
   const address = formData.get('address') as string
   const gender = formData.get('gender') as string
+  const cccd = formData.get('cccd') as string | null
+  const hometown = formData.get('hometown') as string | null
+  const social_insurance_number = formData.get('social_insurance_number') as string | null
+  const health_insurance_number = formData.get('health_insurance_number') as string | null
 
   const updates = {
     full_name,
@@ -23,6 +27,10 @@ export async function updateProfile(formData: FormData) {
     email,
     address,
     gender,
+    cccd,
+    hometown,
+    social_insurance_number,
+    health_insurance_number
   }
 
   const { error } = await supabase

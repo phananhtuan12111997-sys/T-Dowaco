@@ -94,6 +94,19 @@ export async function updateDocument(documentId: string, formData: FormData) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
+  const { data: doc, error: docError } = await supabaseAdmin
+    .from('documents')
+    .select('created_by')
+    .eq('id', documentId)
+    .single()
+
+  const { data: profile } = await supabase.from('profiles').select('department, is_admin').eq('id', user.id).single()
+  const isITAdmin = profile?.department === 'Phòng IT' || profile?.is_admin
+
+  if (!doc || (doc.created_by !== user.id && !isITAdmin)) {
+    return { error: 'Forbidden' }
+  }
+
   for (const file of files) {
     if (file && file.size > 0) {
       const fileExt = file.name.split('.').pop()
@@ -131,7 +144,6 @@ export async function updateDocument(documentId: string, formData: FormData) {
       attachments: finalAttachments
     })
     .eq('id', documentId)
-    .eq('created_by', user.id)
 
   if (updateError) {
     console.error('Error updating document:', updateError)

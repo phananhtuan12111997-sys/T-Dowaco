@@ -20,10 +20,18 @@ export function SidebarNav({ isAdmin }: SidebarNavProps) {
           { href: "/documents/sent", text: "Công văn đã gửi" }
         ]}
       />
+      <SidebarCollapsible 
+        icon={<CheckSquare size={18} />} 
+        text="Quản lý Công việc" 
+        basePath="/tasks"
+        items={[
+          { href: "/tasks/incoming", text: "Công việc đã nhận" },
+          { href: "/tasks/sent", text: "Công việc đã giao" }
+        ]}
+      />
       <SidebarItem href="/meetings" icon={<Calendar size={18} />} text="Quản lý Lịch họp" />
       <SidebarItem href="/payslips" icon={<Banknote size={18} />} text="Quản lý Phiếu lương" />
       <SidebarItem href="/vehicles" icon={<Car size={18} />} text="Quản lý Xin xe" />
-      <SidebarItem href="/tasks" icon={<CheckSquare size={18} />} text="Quản lý Công việc" />
       <SidebarItem href="/news" icon={<Newspaper size={18} />} text="Bảng tin Nội bộ" />
       {isAdmin && (
         <SidebarItem href="/hr" icon={<Users size={18} />} text="Quản lý Nhân sự" />

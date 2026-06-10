@@ -167,12 +167,19 @@ export async function deleteVehicleRequest(id: string) {
   const { data: profile } = await supabase.from('profiles').select('department, is_admin').eq('id', user.id).single()
   const isITAdmin = profile?.department === 'Phòng IT' || profile?.is_admin
 
-  let query = supabase.from('vehicle_requests').delete().eq('id', id)
-  if (!isITAdmin) {
-    query = query.eq('created_by', user.id)
+  let error;
+  if (isITAdmin) {
+    const supabaseAdmin = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
+    const res = await supabaseAdmin.from('vehicle_requests').delete().eq('id', id)
+    error = res.error
+  } else {
+    const res = await supabase.from('vehicle_requests').delete().eq('id', id).eq('created_by', user.id)
+    error = res.error
   }
-
-  const { error } = await query
 
   if (error) {
     throw new Error('Lỗi khi xóa đơn: ' + error.message)
@@ -199,22 +206,51 @@ export async function updateVehicleRequest(id: string, formData: FormData) {
     throw new Error('Vui lòng nhập đầy đủ Tên, Thông tin chuyến đi, Thời gian đi và Thời gian về')
   }
 
-  const { error } = await supabase
-    .from('vehicle_requests')
-    .update({
-      requester_name,
-      trip_purpose,
-      destination: trip_purpose,
-      start_time: new Date(start_time).toISOString(),
-      departure_time: new Date(start_time).toISOString(),
-      end_time: new Date(end_time).toISOString(),
-      vehicle_info,
-      approver_id: approver_id || null,
-      companion_count: companions ? companions.length : 0,
-      companions: companions.length > 0 ? companions : null
-    })
-    .eq('id', id)
-    .eq('created_by', user.id)
+  const { data: profile } = await supabase.from('profiles').select('department, is_admin').eq('id', user.id).single()
+  const isITAdmin = profile?.department === 'Phòng IT' || profile?.is_admin
+
+  let error;
+  if (isITAdmin) {
+    const supabaseAdmin = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
+    const res = await supabaseAdmin
+      .from('vehicle_requests')
+      .update({
+        requester_name,
+        trip_purpose,
+        destination: trip_purpose,
+        start_time: new Date(start_time).toISOString(),
+        departure_time: new Date(start_time).toISOString(),
+        end_time: new Date(end_time).toISOString(),
+        vehicle_info,
+        approver_id: approver_id || null,
+        companion_count: companions ? companions.length : 0,
+        companions: companions.length > 0 ? companions : null
+      })
+      .eq('id', id)
+    error = res.error
+  } else {
+    const res = await supabase
+      .from('vehicle_requests')
+      .update({
+        requester_name,
+        trip_purpose,
+        destination: trip_purpose,
+        start_time: new Date(start_time).toISOString(),
+        departure_time: new Date(start_time).toISOString(),
+        end_time: new Date(end_time).toISOString(),
+        vehicle_info,
+        approver_id: approver_id || null,
+        companion_count: companions ? companions.length : 0,
+        companions: companions.length > 0 ? companions : null
+      })
+      .eq('id', id)
+      .eq('created_by', user.id)
+    error = res.error
+  }
 
   if (error) {
     throw new Error(`Lỗi cập nhật CSDL: ${error.message}`)

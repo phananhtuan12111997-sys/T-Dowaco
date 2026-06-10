@@ -20,10 +20,11 @@ export default async function HRPage() {
     redirect('/login')
   }
 
-  // Double check admin
-  const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single()
+  // Double check admin or HR
+  const { data: profile } = await supabase.from('profiles').select('is_admin, department').eq('id', user.id).single()
+  const isHR = profile?.department?.toLowerCase().includes('tổ chức') || profile?.department?.toLowerCase().includes('kế hoạch')
   
-  if (!profile?.is_admin) {
+  if (!profile?.is_admin && !isHR) {
     redirect('/')
   }
 

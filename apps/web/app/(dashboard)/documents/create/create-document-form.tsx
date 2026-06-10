@@ -2,8 +2,9 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
-import { Send, Star, Paperclip, AlertCircle, UserPlus, Search, X } from 'lucide-react'
+import { Send, Star, Paperclip, AlertCircle, UserPlus, Search, X, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -33,6 +34,8 @@ interface CreateDocumentFormProps {
 }
 
 export function CreateDocumentForm({ users, currentUserId, initialData }: CreateDocumentFormProps) {
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false)
   const [selectedUsers, setSelectedUsers] = useState<User[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -152,17 +155,23 @@ export function CreateDocumentForm({ users, currentUserId, initialData }: Create
       return
     }
 
-    const formData = new FormData(e.currentTarget)
-    formData.delete('attachments')
-    selectedFiles.forEach(file => {
-      formData.append('attachments', file)
-    })
-    const res = await createDocument(formData)
-    if (res?.success) {
-      alert('Gửi công văn thành công!')
-      window.location.href = '/documents/incoming'
-    } else if (res?.error) {
-      alert('Có lỗi xảy ra: ' + res.error)
+    setIsLoading(true)
+    try {
+      const formData = new FormData(e.currentTarget)
+      formData.delete('attachments')
+      selectedFiles.forEach(file => {
+        formData.append('attachments', file)
+      })
+      const res = await createDocument(formData)
+      if (res?.success) {
+        alert('Gửi công văn thành công!')
+        router.push('/documents/sent')
+        router.refresh()
+      } else if (res?.error) {
+        alert('Có lỗi xảy ra: ' + res.error)
+      }
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -178,7 +187,7 @@ export function CreateDocumentForm({ users, currentUserId, initialData }: Create
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <div>
             <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
-              <span>T-Dowaco</span>
+              <span>LKW</span>
               <span>→</span>
               <span>Soạn văn bản</span>
             </div>
@@ -189,8 +198,9 @@ export function CreateDocumentForm({ users, currentUserId, initialData }: Create
             <Button type="button" variant="outline" className="w-full md:w-auto bg-slate-50 hover:bg-slate-100" asChild>
               <Link href="/documents/incoming">Hủy bỏ</Link>
             </Button>
-            <Button type="submit" className="bg-[#1a56db] hover:bg-blue-700 w-full md:w-auto shadow-sm">
-              <Send className="w-4 h-4 mr-2" /> Gửi công văn
+            <Button type="submit" disabled={isLoading} className="bg-[#1a56db] hover:bg-blue-700 w-full md:w-auto shadow-sm">
+              {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />} 
+              {isLoading ? 'Đang gửi...' : 'Gửi công văn'}
             </Button>
           </div>
         </div>

@@ -53,17 +53,19 @@ export function Header({ profile }: { profile: Profile | null }) {
             <SheetHeader className="hidden">
               <SheetTitle>Menu</SheetTitle>
             </SheetHeader>
-            <Link href="/" className="h-20 flex items-center justify-center gap-3 border-b border-blue-500/30 hover:bg-blue-800/40 transition-colors">
-              <img src="/logo.png" alt="Logo" className="h-12 w-auto object-contain" />
-              <span className="font-bold text-xl tracking-wider">T-DOWACO</span>
+            <Link href="/" className="h-24 flex flex-col items-center justify-center gap-1 border-b border-blue-500/30 hover:bg-blue-800/40 transition-colors py-2">
+              <div className="bg-white rounded-full p-1 h-10 w-10 flex items-center justify-center">
+                <img src="/logo.png" alt="Logo" className="h-8 w-auto object-contain" />
+              </div>
+              <span className="font-bold text-xs tracking-wider text-center px-2">CÔNG TY CỔ PHẦN CẤP NƯỚC LONG KHÁNH</span>
             </Link>
             <nav className="flex-1 py-4 overflow-y-auto">
-              <SidebarNav isAdmin={profile?.is_admin} />
+              <SidebarNav isAdmin={profile?.is_admin || profile?.department?.toLowerCase().includes('tổ chức') || profile?.department?.toLowerCase().includes('kế hoạch')} />
             </nav>
           </SheetContent>
         </Sheet>
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-[#1a56db]">T-Dowaco Workspace</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-[#1a56db]">CẤP NƯỚC LONG KHÁNH</h1>
           <p className="text-xs md:text-sm text-slate-500 hidden sm:block">Hệ thống Văn phòng điện tử tích hợp</p>
         </div>
       </div>
