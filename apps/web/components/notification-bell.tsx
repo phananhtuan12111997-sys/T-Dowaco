@@ -71,52 +71,37 @@ export function NotificationBell() {
 
     fetchInitial()
 
-    // Real-time subscription (works if publication enabled)
-    const channel = supabase.channel('notifications-channel')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${userId}`
-        },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            const newNotif = payload.new as Notification
-            setNotifications(prev => [newNotif, ...prev])
-            setUnreadCount(prev => {
-              const newCount = prev + 1
-              unreadCountRef.current = newCount
-              return newCount
-            })
-          } else if (payload.eventType === 'UPDATE') {
-            const updatedNotif = payload.new as Notification
-            setNotifications(prev => {
-              const exists = prev.find(n => n.id === updatedNotif.id)
-              if (exists) {
-                return prev.map(n => n.id === updatedNotif.id ? updatedNotif : n)
-              } else {
-                return [updatedNotif, ...prev]
-              }
-            })
-            // If it was read but now unread, increase count
-            const oldNotif = payload.old as any
-            if (oldNotif && oldNotif.is_read && !updatedNotif.is_read) {
-              setUnreadCount(prev => {
-                const newCount = prev + 1
-                unreadCountRef.current = newCount
-                return newCount
-              })
-            }
-          }
-        }
-      )
-      .subscribe()
+    // Fallback: poll directly from Supabase API every 15s to bypass Next.js middleware
+    const intervalId = setInterval(async () => {
+      if (!userId) return;
+      
+      const { data } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(5);
+        
+      if (data) {
+        setNotifications(data as Notification[]);
+      }
+      
+      const { count } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('is_read', false);
+        
+      if (count !== null) {
+        setUnreadCount(count);
+      }
+    }, 15000);
 
     return () => {
-      supabase.removeChannel(channel)
+      clearInterval(intervalId);
     }
+
+    // cleanup
   }, [userId, supabase])
 
   const loadMore = async () => {

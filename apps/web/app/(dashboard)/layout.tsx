@@ -1,3 +1,7 @@
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
+export const dynamic = 'force-dynamic';
+
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Link from "next/link";
@@ -33,9 +37,46 @@ export default async function DashboardLayout({
   const { data: { user } } = await supabase.auth.getUser();
   
   let profile = null;
+  let documentsCount = 0;
+  let tasksCount = 0;
+  let meetingsCount = 0;
+
   if (user) {
     const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
     profile = data;
+
+    // Fetch counts
+    const { count: dCount } = await supabase
+      .from('document_recipients')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('processing_status', 'Chưa xử lý');
+    documentsCount = dCount || 0;
+
+    const { count: tCount } = await supabase
+      .from('task_recipients')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('processing_status', 'Chưa xử lý');
+    tasksCount = tCount || 0;
+
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+    const { data: meetingsTodayData } = await supabase
+      .from('meetings')
+      .select('created_by, departments, start_time')
+      .gte('start_time', startOfDay.toISOString())
+      .lte('start_time', endOfDay.toISOString());
+
+    meetingsCount = (meetingsTodayData || []).filter((m: any) => {
+      if (m.created_by === user.id) return true;
+      if (!m.departments || m.departments.length === 0) return true;
+      if (m.departments.includes('Tất cả')) return true;
+      if (profile?.department && m.departments.includes(profile.department)) return true;
+      return false;
+    }).length;
   }
   const isHR = profile?.department?.toLowerCase().includes('tổ chức') || profile?.department?.toLowerCase().includes('kế hoạch');
 
@@ -49,7 +90,7 @@ export default async function DashboardLayout({
           <span className="font-bold text-xl tracking-wider">LKWA</span>
         </Link>
         <nav className="flex-1 py-4">
-          <SidebarNav isAdmin={profile?.is_admin || isHR} />
+          <SidebarNav isAdmin={profile?.is_admin || isHR} counts={{ documents: documentsCount, tasks: tasksCount, meetings: meetingsCount }} />
         </nav>
       </aside>
 

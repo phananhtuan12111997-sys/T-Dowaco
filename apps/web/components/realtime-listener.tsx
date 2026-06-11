@@ -70,7 +70,13 @@ export function RealtimeListener({ userId }: { userId: string }) {
 
     channel.subscribe()
 
+    // Fallback: refresh router every 30s in case Realtime is not enabled on tables
+    const fallbackInterval = setInterval(() => {
+      router.refresh()
+    }, 30000)
+
     return () => {
+      clearInterval(fallbackInterval)
       supabase.removeChannel(channel)
     }
   }, [supabase, router, userId])

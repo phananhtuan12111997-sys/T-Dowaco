@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export function SidebarItem({ href, icon, text }: { href: string; icon: React.ReactNode; text: string }) {
+export function SidebarItem({ href, icon, text, badge }: { href: string; icon: React.ReactNode; text: string; badge?: number }) {
   const pathname = usePathname();
   // We use startsWith to match sub-paths (e.g. /payslips/view matches /payslips)
   // However, we should be careful if there are overlapping paths like /meetings and /meetings-archived
@@ -22,6 +22,11 @@ export function SidebarItem({ href, icon, text }: { href: string; icon: React.Re
       >
         <span className={isActive ? 'text-white' : ''}>{icon}</span>
         <span className="text-sm">{text}</span>
+        {badge !== undefined && badge > 0 && (
+          <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+            {badge}
+          </span>
+        )}
       </Link>
     </li>
   );

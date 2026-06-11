@@ -164,10 +164,10 @@ export function CreateDocumentForm({ users, currentUserId, initialData }: Create
       })
       const res = await createDocument(formData)
       if (res?.success) {
+        setIsLoading(false)
         alert('Gửi công văn thành công!')
-        router.push('/documents/sent')
-        router.refresh()
-        return // Đợi chuyển trang, không reset loading
+        window.location.href = '/documents/sent'
+        return
       } else if (res?.error) {
         alert('Có lỗi xảy ra: ' + res.error)
       }

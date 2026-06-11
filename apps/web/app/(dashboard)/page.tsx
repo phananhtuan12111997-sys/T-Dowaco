@@ -1,3 +1,7 @@
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
+export const dynamic = 'force-dynamic';
+
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { RealTimeClock } from "@/components/real-time-clock";
@@ -34,7 +38,7 @@ export default async function Home() {
       .from('task_recipients')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', user.id)
-      .in('processing_status', ['Chưa xử lý', 'Đang thực hiện']);
+      .eq('processing_status', 'Chưa xử lý');
     tasksCount = tCount || 0;
 
     // 2. Công văn chưa xử lý
@@ -75,7 +79,7 @@ export default async function Home() {
             Xin chào! Chúc bạn một ngày làm việc vui vẻ và hiệu quả! 👋
           </h2>
           <p className="text-slate-600 text-sm">
-            Bạn có <span className="font-bold text-red-500">{documentsCount}</span> công văn chưa xử lý, <span className="font-bold text-red-500">{tasksCount}</span> công việc chưa xử lý và <span className="font-bold text-red-500">{meetingsCount}</span> lịch họp trong hôm nay.
+            Bạn có <span className="font-bold text-red-500">{documentsCount}</span> công văn chưa tiếp nhận, <span className="font-bold text-red-500">{tasksCount}</span> công việc chưa tiếp nhận và <span className="font-bold text-red-500">{meetingsCount}</span> lịch họp trong hôm nay.
           </p>
         </div>
         <RealTimeClock />

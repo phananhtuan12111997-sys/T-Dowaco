@@ -8,6 +8,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react'
 interface SubItem {
   href: string
   text: string
+  badge?: number
 }
 
 interface SidebarCollapsibleProps {
@@ -15,9 +16,10 @@ interface SidebarCollapsibleProps {
   text: string
   items: SubItem[]
   basePath: string
+  badge?: number
 }
 
-export function SidebarCollapsible({ icon, text, items, basePath }: SidebarCollapsibleProps) {
+export function SidebarCollapsible({ icon, text, items, basePath, badge }: SidebarCollapsibleProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   // Mặc định mở nếu đường dẫn hiện tại bắt đầu bằng basePath
@@ -32,6 +34,11 @@ export function SidebarCollapsible({ icon, text, items, basePath }: SidebarColla
         <div className="flex items-center gap-3">
           {icon}
           <span className="text-sm font-medium">{text}</span>
+          {badge !== undefined && badge > 0 && (
+            <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-1">
+              {badge}
+            </span>
+          )}
         </div>
         {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
       </button>
@@ -56,6 +63,11 @@ export function SidebarCollapsible({ icon, text, items, basePath }: SidebarColla
                   }`}
                 >
                   <span className="mr-2 text-xs opacity-50">-</span> {item.text}
+                  {item.badge !== undefined && item.badge > 0 && (
+                    <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                      {item.badge}
+                    </span>
+                  )}
                 </Link>
               </li>
             )
