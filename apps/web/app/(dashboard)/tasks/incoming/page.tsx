@@ -24,7 +24,7 @@ export default async function IncomingTasksPage(props: {
     .eq('id', userData.user.id)
     .single()
 
-  const isStaffOnly = currentUserProfile?.role === 'Nhân viên'
+  const isStaffOnly = ['Nhân viên', 'Thủ quỹ', 'Thủ kho', 'Lái xe'].includes(currentUserProfile?.role)
 
   const { createClient: createSupabaseClient } = await import('@supabase/supabase-js')
   const supabaseAdmin = createSupabaseClient(

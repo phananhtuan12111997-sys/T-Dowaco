@@ -177,6 +177,9 @@ export function UserActions({ user }: { user: any }) {
                     <SelectItem value="Phó quản đốc">Phó quản đốc</SelectItem>
                     <SelectItem value="Quản đốc">Quản đốc</SelectItem>
                     <SelectItem value="Nhân viên">Nhân viên</SelectItem>
+                    <SelectItem value="Thủ quỹ">Thủ quỹ</SelectItem>
+                    <SelectItem value="Thủ kho">Thủ kho</SelectItem>
+                    <SelectItem value="Lái xe">Lái xe</SelectItem>
                     <SelectItem value="Admin Hệ thống">Admin Hệ thống</SelectItem>
                   </SelectContent>
                 </Select>

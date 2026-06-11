@@ -380,7 +380,7 @@ export async function getForwardableUsers() {
   } else if (profile.role === 'Phó giám đốc') {
     // Can forward to everyone except Giám đốc
     query = query.neq('role', 'Giám đốc')
-  } else if (profile.role === 'Nhân viên') {
+  } else if (['Nhân viên', 'Thủ quỹ', 'Thủ kho', 'Lái xe'].includes(profile.role)) {
     return [] // Cannot forward
   } else {
     // Trưởng phòng, Phó phòng, Đội trưởng, Phó đội trưởng...
