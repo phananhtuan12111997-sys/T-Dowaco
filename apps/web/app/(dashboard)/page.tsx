@@ -33,8 +33,14 @@ export default async function Home() {
     const isHR = profile?.department?.toLowerCase().includes('tổ chức') || profile?.department?.toLowerCase().includes('kế hoạch');
     canAccessHR = profile?.is_admin || isHR;
 
+    const { createClient: createSupabaseClient } = await import('@supabase/supabase-js')
+    const supabaseAdmin = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
     // 1. Công việc chưa xử lý
-    const { count: tCount } = await supabase
+    const { count: tCount } = await supabaseAdmin
       .from('task_recipients')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', user.id)
@@ -42,7 +48,7 @@ export default async function Home() {
     tasksCount = tCount || 0;
 
     // 2. Công văn chưa xử lý
-    const { count: dCount } = await supabase
+    const { count: dCount } = await supabaseAdmin
       .from('document_recipients')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', user.id)
@@ -55,7 +61,7 @@ export default async function Home() {
     const endOfDay = new Date();
     endOfDay.setHours(23, 59, 59, 999);
 
-    const { data: meetingsTodayData } = await supabase
+    const { data: meetingsTodayData } = await supabaseAdmin
       .from('meetings')
       .select('created_by, departments, start_time')
       .gte('start_time', startOfDay.toISOString())

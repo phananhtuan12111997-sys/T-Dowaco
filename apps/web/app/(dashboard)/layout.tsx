@@ -45,15 +45,21 @@ export default async function DashboardLayout({
     const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
     profile = data;
 
+    const { createClient: createSupabaseClient } = await import('@supabase/supabase-js')
+    const supabaseAdmin = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
     // Fetch counts
-    const { count: dCount } = await supabase
+    const { count: dCount } = await supabaseAdmin
       .from('document_recipients')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', user.id)
       .eq('processing_status', 'Chưa xử lý');
     documentsCount = dCount || 0;
 
-    const { count: tCount } = await supabase
+    const { count: tCount } = await supabaseAdmin
       .from('task_recipients')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', user.id)
@@ -64,7 +70,7 @@ export default async function DashboardLayout({
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date();
     endOfDay.setHours(23, 59, 59, 999);
-    const { data: meetingsTodayData } = await supabase
+    const { data: meetingsTodayData } = await supabaseAdmin
       .from('meetings')
       .select('created_by, departments, start_time')
       .gte('start_time', startOfDay.toISOString())
