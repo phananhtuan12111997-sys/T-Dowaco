@@ -25,7 +25,7 @@ export default async function NewsPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 max-w-2xl mx-auto mb-8">
         <div>
           <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
-            <span>LKW</span>
+            <span>LKWA</span>
             <span>→</span>
             <span>Bảng tin nội bộ</span>
           </div>

@@ -114,7 +114,7 @@ export default async function SentDocumentsPage(props: {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
-            <span>LKW</span>
+            <span>LKWA</span>
             <span>→</span>
             <span>Công văn đã gửi</span>
           </div>

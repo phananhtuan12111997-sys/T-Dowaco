@@ -76,7 +76,7 @@ export default async function EditVehicleRequestPage({ params }: { params: { id:
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
-        <span>LKW</span>
+        <span>LKWA</span>
         <span>→</span>
         <Link href="/vehicles" className="hover:text-[#1a56db]">Quản lý xin xe</Link>
         <span>→</span>

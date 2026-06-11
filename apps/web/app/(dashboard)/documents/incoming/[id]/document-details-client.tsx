@@ -209,7 +209,7 @@ export function DocumentDetailsClient({
                 <ArrowLeft className="w-4 h-4" />
               </Link>
             </Button>
-            <span>LKW</span>
+            <span>LKWA</span>
             <span>→</span>
             <span>Quản lý công văn</span>
           </div>

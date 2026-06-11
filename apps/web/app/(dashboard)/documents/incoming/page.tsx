@@ -90,7 +90,7 @@ export default async function IncomingDocumentsPage(props: {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
-            <span>LKW</span>
+            <span>LKWA</span>
             <span>→</span>
             <span>Công văn đến</span>
           </div>

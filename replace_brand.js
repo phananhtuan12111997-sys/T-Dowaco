@@ -35,11 +35,7 @@ let modifiedCount = 0;
 allFiles.forEach(file => {
   let content = fs.readFileSync(file, 'utf8');
   let newContent = content
-    .replace(/T-Dowaco/g, 'LKW')
-    .replace(/T-DOWACO/g, 'LKW')
-    .replace(/t-dowaco/g, 'LKW')
-    .replace(/DOFFICE/g, 'LKW')
-    .replace(/doffice/g, 'LKW');
+    .replace(/\bLKW\b/g, 'LKWA');
 
   if (content !== newContent) {
     fs.writeFileSync(file, newContent, 'utf8');

@@ -53,7 +53,7 @@ export default async function EditMeetingPage({ params }: { params: Promise<{ id
   return (
     <div className="space-y-4 max-w-3xl mx-auto">
       <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
-        <Link href="/meetings" className="hover:text-[#1a56db] transition-colors">LKW</Link>
+        <Link href="/meetings" className="hover:text-[#1a56db] transition-colors">LKWA</Link>
         <span>→</span>
         <Link href="/meetings" className="hover:text-[#1a56db]">Quản lý lịch họp</Link>
         <span>→</span>

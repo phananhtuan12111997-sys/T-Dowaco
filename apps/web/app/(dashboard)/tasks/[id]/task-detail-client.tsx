@@ -204,7 +204,7 @@ export function TaskDetailClient({
                 <ArrowLeft className="w-4 h-4" />
               </Link>
             </Button>
-            <span>LKW</span>
+            <span>LKWA</span>
             <span>→</span>
             <span>Quản lý công việc</span>
           </div>

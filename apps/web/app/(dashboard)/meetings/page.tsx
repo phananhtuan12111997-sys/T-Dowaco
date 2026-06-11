@@ -93,7 +93,7 @@ export default async function MeetingsPage({
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
-            <Link href="/meetings" className="hover:text-blue-600 transition-colors">LKW</Link>
+            <Link href="/meetings" className="hover:text-blue-600 transition-colors">LKWA</Link>
             <span>→</span>
             <span>Quản lý lịch họp</span>
           </div>

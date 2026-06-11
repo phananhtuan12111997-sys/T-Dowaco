@@ -20,8 +20,8 @@ const inter = Inter({ subsets: ["latin"] });
 import { RealtimeListener } from "@/components/realtime-listener";
 
 export const metadata: Metadata = {
-  title: "LKW - LKW Workspace",
-  description: "Hệ thống quản trị nội bộ LKW",
+  title: "LKWA - LKWA Workspace",
+  description: "Hệ thống quản trị nội bộ LKWA",
 };
 
 export default async function DashboardLayout({
@@ -46,7 +46,7 @@ export default async function DashboardLayout({
       <aside className="w-64 bg-[#1a56db] text-white hidden lg:flex flex-col min-h-screen fixed left-0 top-0 z-20">
         <Link href="/" className="h-20 flex items-center justify-center gap-3 border-b border-blue-500/30 hover:bg-blue-800/40 transition-colors">
           <img src="/logo.png" alt="Logo" className="h-12 w-auto object-contain" />
-          <span className="font-bold text-xl tracking-wider">LKW</span>
+          <span className="font-bold text-xl tracking-wider">LKWA</span>
         </Link>
         <nav className="flex-1 py-4">
           <SidebarNav isAdmin={profile?.is_admin || isHR} />
