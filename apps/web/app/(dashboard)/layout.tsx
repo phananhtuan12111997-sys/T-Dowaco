@@ -81,6 +81,7 @@ export default async function DashboardLayout({
       if (!m.departments || m.departments.length === 0) return true;
       if (m.departments.includes('Tất cả')) return true;
       if (profile?.department && m.departments.includes(profile.department)) return true;
+      if (m.departments.includes(user.id)) return true;
       return false;
     }).length;
   }

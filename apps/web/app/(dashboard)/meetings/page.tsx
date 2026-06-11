@@ -32,8 +32,10 @@ export default async function MeetingsPage({
   
   let isAllowed = false
   let isITAdmin = false
+  let profile: any = null
   if (user) {
-    const { data: profile } = await supabase.from('profiles').select('role, is_admin, department').eq('id', user.id).single()
+    const { data } = await supabase.from('profiles').select('role, is_admin, department').eq('id', user.id).single()
+    profile = data
     if (profile) {
       const allowedRoles = ['Kế toán trưởng', 'Trưởng phòng', 'Phó phòng', 'Đội trưởng', 'Đội phó', 'Quản đốc', 'Phó quản đốc']
       const isBanDieuHanh = profile.department === 'Ban điều hành'
@@ -73,13 +75,25 @@ export default async function MeetingsPage({
   })
 
   // Lấy danh sách lịch họp
-  const { data: meetings } = await supabase
+  const { data: rawMeetings } = await supabase
     .from('meetings')
     .select('*')
     .order('start_time', { ascending: true })
 
+  const isFullAccess = profile?.is_admin || profile?.department === 'Ban điều hành' || profile?.department === 'Phòng tổ chức Hành chánh';
+
+  const meetings = (rawMeetings || []).filter((m: any) => {
+    if (isFullAccess) return true;
+    if (user && m.created_by === user.id) return true;
+    if (!m.departments || m.departments.length === 0) return true;
+    if (m.departments.includes('Tất cả')) return true;
+    if (profile?.department && m.departments.includes(profile.department)) return true;
+    if (user && m.departments.includes(user.id)) return true;
+    return false;
+  });
+
   // Lọc cuộc họp sắp tới (từ hôm nay trở đi)
-  const upcomingMeetings = meetings && meetings.length > 0 
+  const upcomingMeetings = meetings.length > 0 
     ? meetings.filter((m: any) => new Date(m.start_time) >= new Date()).sort((a: any, b: any) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
     : []
 

@@ -30,13 +30,21 @@ export async function createMeeting(formData: FormData) {
   const room = formData.get('room') as string
   const start_time = formData.get('start_time') as string
   const end_time = formData.get('end_time') as string
-  let departments = formData.getAll('departments') as string[]
   const host = formData.get('host') as string
+  let inputList = formData.getAll('departments') as string[]
   
   const isFullAccess = profile?.is_admin || isBanDieuHanh || isToChucHanhChanh;
   if (!isFullAccess) {
-    departments = [profile.department];
+    inputList = [profile.department];
   }
+
+  // Parse inputList to separate department names and UUIDs
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const departmentNames = inputList.filter(item => !uuidRegex.test(item));
+  const participantIds = inputList.filter(item => uuidRegex.test(item));
+
+  // Save both to departments column as mixed strings
+  const departmentsToSave = inputList;
 
   if (!title || !start_time || !end_time || !room || !host) {
     throw new Error('Vui lòng nhập đầy đủ các trường bắt buộc')
@@ -51,6 +59,7 @@ export async function createMeeting(formData: FormData) {
       room,
       start_time: new Date(start_time).toISOString(),
       end_time: new Date(end_time).toISOString(),
+      departments: departmentsToSave,
       status: 'Đã duyệt',
       created_by: user.id
     })
@@ -63,7 +72,7 @@ export async function createMeeting(formData: FormData) {
   }
 
   // Gửi thông báo
-  if (departments.length > 0) {
+  if (inputList.length > 0) {
     const supabaseAdmin = createSupabaseClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -71,8 +80,18 @@ export async function createMeeting(formData: FormData) {
     )
 
     let query = supabaseAdmin.from('profiles').select('id').neq('id', user.id) // Loại trừ người tạo
-    if (!departments.includes('Tất cả')) {
-      query = query.in('department', departments)
+    
+    if (!departmentNames.includes('Tất cả')) {
+      const orConditions = [];
+      if (departmentNames.length > 0) orConditions.push(`department.in.(${departmentNames.map(d => `"${d}"`).join(',')})`);
+      if (participantIds.length > 0) orConditions.push(`id.in.(${participantIds.join(',')})`);
+      
+      if (orConditions.length > 0) {
+        query = query.or(orConditions.join(','));
+      } else {
+        // Edge case: inputList has items but they don't match regex or aren't departments. Should not happen.
+        query = query.in('department', ['__none__']); 
+      }
     }
 
     const { data: usersToNotify } = await query

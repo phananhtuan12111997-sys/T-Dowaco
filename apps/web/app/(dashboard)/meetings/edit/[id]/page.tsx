@@ -4,6 +4,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { updateMeeting } from '../../actions'
 import Link from 'next/link'
+import { MeetingParticipantsSelector } from '@/components/meeting-participants-selector'
 import { createClient } from '@/utils/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import { format } from 'date-fns'
@@ -28,6 +29,13 @@ export default async function EditMeetingPage({ params }: { params: Promise<{ id
 
   const { data: profile } = await supabase.from('profiles').select('department, is_admin').eq('id', user.id).single()
   const isITAdmin = profile?.department === 'Phòng IT' || profile?.is_admin
+  const isBanDieuHanh = profile?.department === 'Ban điều hành'
+  const isToChucHanhChanh = profile?.department === 'Phòng tổ chức Hành chánh'
+  const isFullAccess = profile?.is_admin || isBanDieuHanh || isToChucHanhChanh
+  const userDepartment = profile?.department || ''
+
+  const { data: allProfiles } = await supabase.from('profiles').select('id, full_name, department, role').order('department');
+  const profiles = allProfiles || [];
 
   // Only creator or ITAdmin can edit
   if (meeting.created_by !== user.id && !isITAdmin) {
@@ -129,6 +137,13 @@ export default async function EditMeetingPage({ params }: { params: Promise<{ id
                   required 
                   className="bg-slate-50 border-slate-200 focus-visible:ring-blue-500"
                 />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-slate-700 font-semibold">Thành phần tham dự (Phòng ban / Cá nhân)</Label>
+              <div className="mt-2 text-sm text-slate-500 bg-amber-50 p-3 rounded-md border border-amber-200">
+                <p>Lưu ý: Bạn không thể thay đổi thành phần tham dự sau khi cuộc họp đã được tạo. Nếu cần thay đổi, vui lòng xóa và tạo cuộc họp mới.</p>
               </div>
             </div>
 
