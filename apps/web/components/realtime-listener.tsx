@@ -70,14 +70,8 @@ export function RealtimeListener({ userId }: { userId: string }) {
 
     channel.subscribe()
 
-    // Fallback: poll every 30 seconds just in case Realtime isn't enabled in Supabase yet
-    const intervalId = setInterval(() => {
-      router.refresh()
-    }, 30000)
-
     return () => {
       supabase.removeChannel(channel)
-      clearInterval(intervalId)
     }
   }, [supabase, router, userId])
 

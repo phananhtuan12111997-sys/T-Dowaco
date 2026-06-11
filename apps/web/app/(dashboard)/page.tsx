@@ -82,7 +82,7 @@ export default async function Home() {
       </div>
 
       {/* Cards Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
+      <div className="grid grid-cols-3 gap-4 mt-8">
         <DashboardCard 
           href="/documents" 
           icon={<FileText size={32} className="text-blue-500" />} 

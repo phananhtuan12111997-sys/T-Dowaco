@@ -48,6 +48,12 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user) {
+    // Optimize: Only fetch profile for page navigations (GET requests)
+    // Avoid fetching for POST/PUT/DELETE (Server Actions/APIs) to save DB load
+    if (request.method !== 'GET') {
+      return supabaseResponse;
+    }
+
     // Fetch user profile to check force_password_change and is_admin
     const { data: profile } = await supabase
       .from('profiles')

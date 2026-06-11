@@ -168,12 +168,14 @@ export function EditDocumentForm({ users, currentUserId, documentId, initialData
         alert('Cập nhật công văn thành công!')
         router.push('/documents/sent')
         router.refresh()
+        return // Đợi chuyển trang, không reset loading
       } else if (res?.error) {
         alert('Có lỗi xảy ra: ' + res.error)
       }
-    } finally {
-      setIsLoading(false)
+    } catch (e) {
+      console.error(e)
     }
+    setIsLoading(false)
   }
 
   return (

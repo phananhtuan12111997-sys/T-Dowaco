@@ -131,12 +131,14 @@ export function CreateTaskForm({ users, currentUserId }: CreateTaskFormProps) {
       if (res?.success) {
         alert('Giao công việc thành công!')
         window.location.href = '/tasks/sent'
+        return // Đợi chuyển trang, không reset loading
       } else if (res?.error) {
         alert('Có lỗi xảy ra: ' + res.error)
       }
-    } finally {
-      setIsLoading(false)
+    } catch (e) {
+      console.error(e)
     }
+    setIsLoading(false)
   }
 
   return (

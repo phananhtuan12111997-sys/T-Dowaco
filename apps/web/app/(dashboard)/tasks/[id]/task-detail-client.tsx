@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Clock, AlertCircle, FileText, CheckCircle2, MessageSquare, Send, CornerUpRight, XCircle, Download, Eye, X, Paperclip, Loader2 } from 'lucide-react'
@@ -46,7 +46,9 @@ export function TaskDetailClient({
   const [selectedRecipientName, setSelectedRecipientName] = useState<string>('')
 
   // Loading state
-  const [isActionLoading, setIsActionLoading] = useState(false)
+  const [isPending, startTransition] = useTransition()
+  const [isActionLoadingState, setIsActionLoading] = useState(false)
+  const isActionLoading = isActionLoadingState || isPending
 
   useEffect(() => {
     if (showForwardModal && forwardableUsers.length === 0) {
@@ -66,20 +68,16 @@ export function TaskDetailClient({
     }
   }, [searchParams, isAssigner])
 
-  // Polling for real-time updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      router.refresh()
-    }, 5000)
-    return () => clearInterval(interval)
-  }, [router])
-
+  // Real-time updates are handled by global RealtimeListener
+  
   const handleAccept = async () => {
     if (!currentUserRecipient) return
     setIsActionLoading(true)
     try {
       await acceptTask(task.id)
-      router.refresh()
+      startTransition(() => {
+        router.refresh()
+      })
     } finally {
       setIsActionLoading(false)
     }
@@ -98,7 +96,9 @@ export function TaskDetailClient({
       setShowReportModal(false)
       setReportContent('')
       setReportFiles([])
-      router.refresh()
+      startTransition(() => {
+        router.refresh()
+      })
     } finally {
       setIsActionLoading(false)
     }
@@ -112,7 +112,9 @@ export function TaskDetailClient({
       setShowForwardModal(false)
       setSelectedForwardUsers([])
       setForwardNote('')
-      router.refresh()
+      startTransition(() => {
+        router.refresh()
+      })
     } finally {
       setIsActionLoading(false)
     }
@@ -123,7 +125,9 @@ export function TaskDetailClient({
       setIsActionLoading(true)
       try {
         await approveTask(task.id, recipientId, recipientName)
-        router.refresh()
+        startTransition(() => {
+          router.refresh()
+        })
       } finally {
         setIsActionLoading(false)
       }
@@ -155,7 +159,9 @@ export function TaskDetailClient({
         setShowRejectModal(false)
         setRejectReason('')
         setSelectedRecipientId(null)
-        router.refresh()
+        startTransition(() => {
+          router.refresh()
+        })
       } finally {
         setIsActionLoading(false)
       }
@@ -174,7 +180,9 @@ export function TaskDetailClient({
       await addComment(formData)
       setCommentText('')
       setCommentFiles([])
-      router.refresh()
+      startTransition(() => {
+        router.refresh()
+      })
     } finally {
       setIsActionLoading(false)
     }

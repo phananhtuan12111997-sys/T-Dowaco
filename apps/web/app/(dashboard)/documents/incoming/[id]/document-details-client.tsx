@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Clock, AlertCircle, FileText, CheckCircle2, MessageSquare, Send, CornerUpRight, XCircle, Download, Eye, X, Paperclip, Loader2 } from 'lucide-react'
@@ -46,7 +46,9 @@ export function DocumentDetailsClient({
   const [selectedRecipientName, setSelectedRecipientName] = useState<string>('')
 
   // Loading state
-  const [isActionLoading, setIsActionLoading] = useState(false)
+  const [isPending, startTransition] = useTransition()
+  const [isActionLoadingState, setIsActionLoading] = useState(false)
+  const isActionLoading = isActionLoadingState || isPending
 
   useEffect(() => {
     if (showForwardModal && forwardableUsers.length === 0) {
@@ -66,14 +68,8 @@ export function DocumentDetailsClient({
     }
   }, [searchParams, isAssigner])
 
-  // Polling for real-time updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      router.refresh()
-    }, 5000)
-    return () => clearInterval(interval)
-  }, [router])
-
+  // Real-time updates are handled by global RealtimeListener
+  
   const handleAccept = async () => {
     if (!currentUserRecipient) return
     setIsActionLoading(true)
@@ -82,7 +78,9 @@ export function DocumentDetailsClient({
       if (res?.error) {
         alert('Lỗi: ' + res.error)
       }
-      router.refresh()
+      startTransition(() => {
+        router.refresh()
+      })
     } catch (e: any) {
       alert('Đã xảy ra lỗi: ' + e.message)
     } finally {
@@ -103,7 +101,9 @@ export function DocumentDetailsClient({
       setShowReportModal(false)
       setReportContent('')
       setReportFiles([])
-      router.refresh()
+      startTransition(() => {
+        router.refresh()
+      })
     } finally {
       setIsActionLoading(false)
     }
@@ -117,7 +117,9 @@ export function DocumentDetailsClient({
       setShowForwardModal(false)
       setSelectedForwardUsers([])
       setForwardNote('')
-      router.refresh()
+      startTransition(() => {
+        router.refresh()
+      })
     } finally {
       setIsActionLoading(false)
     }
@@ -128,7 +130,9 @@ export function DocumentDetailsClient({
       setIsActionLoading(true)
       try {
         await approveDocument(documentInfo.id, recipientId)
-        router.refresh()
+        startTransition(() => {
+          router.refresh()
+        })
       } finally {
         setIsActionLoading(false)
       }
@@ -160,7 +164,9 @@ export function DocumentDetailsClient({
         setShowRejectModal(false)
         setRejectReason('')
         setSelectedRecipientId(null)
-        router.refresh()
+        startTransition(() => {
+          router.refresh()
+        })
       } finally {
         setIsActionLoading(false)
       }
@@ -179,7 +185,9 @@ export function DocumentDetailsClient({
       await addDocumentComment(formData)
       setCommentText('')
       setCommentFiles([])
-      router.refresh()
+      startTransition(() => {
+        router.refresh()
+      })
     } finally {
       setIsActionLoading(false)
     }

@@ -114,24 +114,8 @@ export function NotificationBell() {
       )
       .subscribe()
 
-    // Fallback polling every 3 seconds to ensure real-time experience
-    const interval = setInterval(async () => {
-      const count = await getUnreadCount()
-      if (count > unreadCountRef.current) {
-        // Fetch new notifications if count increased
-        getNotifications(0, 5).then(data => {
-           setNotifications(data)
-        })
-      }
-      if (count !== unreadCountRef.current) {
-        setUnreadCount(count)
-        unreadCountRef.current = count
-      }
-    }, 3000)
-
     return () => {
       supabase.removeChannel(channel)
-      clearInterval(interval)
     }
   }, [userId, supabase])
 
