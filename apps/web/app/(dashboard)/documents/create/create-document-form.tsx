@@ -162,14 +162,23 @@ export function CreateDocumentForm({ users, currentUserId, initialData }: Create
       selectedFiles.forEach(file => {
         formData.append('attachments', file)
       })
+      
       const res = await createDocument(formData)
+      
       if (res?.success) {
         setIsLoading(false)
-        alert('Gửi công văn thành công!')
-        window.location.href = '/documents/sent'
+        // Delay alert and navigation to allow React to re-render the stopped spinner
+        setTimeout(() => {
+          alert('Gửi công văn thành công!')
+          window.location.href = '/documents/sent'
+        }, 100)
         return
       } else if (res?.error) {
-        alert('Có lỗi xảy ra: ' + res.error)
+        setIsLoading(false)
+        setTimeout(() => {
+          alert('Có lỗi xảy ra: ' + res.error)
+        }, 100)
+        return
       }
     } catch (e) {
       console.error(e)
