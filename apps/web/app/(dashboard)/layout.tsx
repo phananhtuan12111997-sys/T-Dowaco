@@ -36,7 +36,7 @@ export default async function DashboardLayout({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   
-  let profile = null;
+  let profile: any = null;
   let documentsCount = 0;
   let tasksCount = 0;
   let meetingsCount = 0;
