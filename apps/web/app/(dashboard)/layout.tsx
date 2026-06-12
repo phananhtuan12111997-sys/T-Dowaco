@@ -77,6 +77,7 @@ export default async function DashboardLayout({
       .lte('start_time', endOfDay.toISOString());
 
     meetingsCount = (meetingsTodayData || []).filter((m: any) => {
+      if (profile?.department === 'Phòng tổ chức Hành chánh' || profile?.is_admin) return true;
       if (m.created_by === user.id) return true;
       if (!m.departments || m.departments.length === 0) return true;
       if (m.departments.includes('Tất cả')) return true;

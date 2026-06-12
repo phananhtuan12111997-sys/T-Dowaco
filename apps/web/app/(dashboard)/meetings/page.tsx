@@ -80,7 +80,7 @@ export default async function MeetingsPage({
     .select('*')
     .order('start_time', { ascending: true })
 
-  const isFullAccess = profile?.is_admin || profile?.department === 'Ban điều hành' || profile?.department === 'Phòng tổ chức Hành chánh';
+  const isFullAccess = profile?.is_admin || profile?.department === 'Phòng tổ chức Hành chánh';
 
   const meetings = (rawMeetings || []).filter((m: any) => {
     if (isFullAccess) return true;
