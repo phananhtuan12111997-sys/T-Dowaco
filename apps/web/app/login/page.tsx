@@ -52,6 +52,12 @@ export default function LoginPage() {
     }
   }
 
+  const onFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    await handleSubmit(formData)
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
       <Card className="w-full max-w-[500px] shadow-lg border-slate-200">
@@ -65,7 +71,7 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={handleSubmit} className="space-y-4">
+          <form onSubmit={onFormSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="username">Tài khoản</Label>
               <Input 
@@ -76,6 +82,13 @@ export default function LoginPage() {
                 required 
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    const form = e.currentTarget.form
+                    if (form) form.requestSubmit()
+                  }
+                }}
               />
             </div>
             <div className="space-y-2">
@@ -89,6 +102,13 @@ export default function LoginPage() {
                   required 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      const form = e.currentTarget.form
+                      if (form) form.requestSubmit()
+                    }
+                  }}
                   className="pr-10"
                 />
                 <button
