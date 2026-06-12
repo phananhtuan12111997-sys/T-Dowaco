@@ -26,6 +26,7 @@ export default async function EditVehicleRequestPage({ params }: { params: { id:
 
   const { data: profile } = await supabase.from('profiles').select('department, is_admin').eq('id', user.id).single()
   const isITAdmin = profile?.department === 'Phòng IT' || profile?.is_admin
+  const isHR = profile?.department === 'Phòng tổ chức Hành chánh'
 
   // Fetch the request
   const { data: request, error: reqError } = await supabase
@@ -34,7 +35,7 @@ export default async function EditVehicleRequestPage({ params }: { params: { id:
     .eq('id', params.id)
     .single()
 
-  if (reqError || !request || (request.created_by !== user.id && !isITAdmin)) {
+  if (reqError || !request || (request.created_by !== user.id && !isITAdmin && !isHR)) {
     redirect('/vehicles')
   }
 
@@ -157,13 +158,12 @@ export default async function EditVehicleRequestPage({ params }: { params: { id:
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="vehicle_info" className="text-slate-700 font-semibold">Phương tiện & Tài xế đề xuất <span className="text-red-500">*</span></Label>
+              <Label htmlFor="vehicle_info" className="text-slate-700 font-semibold">Đề xuất loại xe / tài xế <span className="text-slate-400 font-normal text-sm">(Không bắt buộc)</span></Label>
               <Input 
                 id="vehicle_info" 
                 name="vehicle_info" 
                 defaultValue={request.vehicle_info}
-                placeholder="Ví dụ: Xe Fortuner 7 chỗ - Tài xế Hùng"
-                required
+                placeholder="Ví dụ: Cần xe 7 chỗ, hoặc Xe Fortuner - Tài xế Hùng"
                 className="bg-slate-50 border-slate-200 focus-visible:ring-blue-500"
               />
             </div>

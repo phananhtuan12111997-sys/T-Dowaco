@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 
-export function IncomingFilters({ users = [] }: { users?: any[] }) {
+export function SentFilters({ users = [] }: { users?: any[] }) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -36,14 +36,14 @@ export function IncomingFilters({ users = [] }: { users?: any[] }) {
 
   const currentType = searchParams.get('type') || 'all'
   const currentUrgency = searchParams.get('urgency') || 'all'
-  const currentSender = searchParams.get('sender') || 'all'
+  const currentrecipient = searchParams.get('recipient') || 'all'
   const currentFrom = searchParams.get('from') || ''
   const currentTo = searchParams.get('to') || ''
   const currentQ = searchParams.get('q') || ''
 
   const [search, setSearch] = useState(currentQ)
-  const [openSender, setOpenSender] = useState(false)
-  const [senderSearch, setSenderSearch] = useState('')
+  const [openrecipient, setOpenrecipient] = useState(false)
+  const [recipientSearch, setrecipientSearch] = useState('')
 
   const createQueryString = useCallback(
     (name: string, value: string) => {
@@ -135,19 +135,19 @@ export function IncomingFilters({ users = [] }: { users?: any[] }) {
       </div>
 
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full">
-        <Popover open={openSender} onOpenChange={setOpenSender}>
+        <Popover open={openrecipient} onOpenChange={setOpenrecipient}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
               role="combobox"
-              aria-expanded={openSender}
+              aria-expanded={openrecipient}
               className="w-full sm:w-[250px] justify-between font-normal text-slate-600"
               disabled={isPending}
             >
               <span className="truncate">
-                {currentSender === 'all' 
+                {currentrecipient === 'all' 
                   ? "Tất cả người gửi" 
-                  : users.find((user) => user.id === currentSender)?.full_name || "Không tìm thấy"}
+                  : users.find((user) => user.id === currentrecipient)?.full_name || "Không tìm thấy"}
               </span>
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
@@ -156,8 +156,8 @@ export function IncomingFilters({ users = [] }: { users?: any[] }) {
             <Command>
               <CommandInput 
                 placeholder="Tìm kiếm người gửi..." 
-                value={senderSearch}
-                onValueChange={setSenderSearch}
+                value={recipientSearch}
+                onValueChange={setrecipientSearch}
               />
               <CommandList>
                 <CommandEmpty>Không tìm thấy người gửi.</CommandEmpty>
@@ -165,33 +165,33 @@ export function IncomingFilters({ users = [] }: { users?: any[] }) {
                   <CommandItem
                     value="all"
                     onSelect={() => {
-                      handleFilterChange('sender', 'all')
-                      setOpenSender(false)
-                      setSenderSearch('')
+                      handleFilterChange('recipient', 'all')
+                      setOpenrecipient(false)
+                      setrecipientSearch('')
                     }}
                   >
                     <Check
                       className={cn(
                         "mr-2 h-4 w-4",
-                        currentSender === 'all' ? "opacity-100" : "opacity-0"
+                        currentrecipient === 'all' ? "opacity-100" : "opacity-0"
                       )}
                     />
                     Tất cả người gửi
                   </CommandItem>
-                  {senderSearch.trim().length > 0 && users.map((user) => (
+                  {recipientSearch.trim().length > 0 && users.map((user) => (
                     <CommandItem
                       key={user.id}
                       value={user.full_name}
                       onSelect={() => {
-                        handleFilterChange('sender', user.id)
-                        setOpenSender(false)
-                        setSenderSearch('')
+                        handleFilterChange('recipient', user.id)
+                        setOpenrecipient(false)
+                        setrecipientSearch('')
                       }}
                     >
                       <Check
                         className={cn(
                           "mr-2 h-4 w-4",
-                          currentSender === user.id ? "opacity-100" : "opacity-0"
+                          currentrecipient === user.id ? "opacity-100" : "opacity-0"
                         )}
                       />
                       {user.full_name}

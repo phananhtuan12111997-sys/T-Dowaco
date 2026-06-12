@@ -1,12 +1,13 @@
 import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
-import { Plus, Search, Star } from 'lucide-react'
+import { Plus, Search, Star, Inbox, Clock, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { IncomingFilters } from './incoming-filters'
 import { IncomingPagination } from './incoming-pagination'
-import { IncomingDocumentRow } from './incoming-document-row'
+import { IncomingTable } from './incoming-table'
 import { RealtimeListSubscriber } from '@/components/realtime-list-subscriber'
+import { getUsers } from '../create/actions'
 
 export default async function IncomingDocumentsPage(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -17,12 +18,17 @@ export default async function IncomingDocumentsPage(props: {
   const q = typeof searchParams.q === 'string' ? searchParams.q : ''
   const type = typeof searchParams.type === 'string' ? searchParams.type : 'all'
   const urgency = typeof searchParams.urgency === 'string' ? searchParams.urgency : 'all'
+  const status = typeof searchParams.status === 'string' ? searchParams.status : 'all'
+  const senderId = typeof searchParams.sender === 'string' ? searchParams.sender : 'all'
+  const fromDate = typeof searchParams.from === 'string' ? searchParams.from : ''
+  const toDate = typeof searchParams.to === 'string' ? searchParams.to : ''
   const pageStr = typeof searchParams.page === 'string' ? searchParams.page : '1'
   const page = parseInt(pageStr, 10) || 1
   const limit = 10
   const offset = (page - 1) * limit
   
   const { data: userData } = await supabase.auth.getUser()
+  const users = await getUsers()
 
   const { createClient: createSupabaseClient } = await import('@supabase/supabase-js')
   const supabaseAdmin = createSupabaseClient(
@@ -59,6 +65,27 @@ export default async function IncomingDocumentsPage(props: {
     } else if (urgency === 'normal') {
       query = query.eq('priority', false)
     }
+  }
+
+  if (status !== 'all') {
+    if (status === 'unread') {
+      query = query.eq('document_recipients.status', 'Chưa xem')
+    } else if (status === 'processing') {
+      // Đã tiếp nhận -> Đang thực hiện
+      query = query.eq('document_recipients.processing_status', 'Đang thực hiện')
+    }
+  }
+
+  if (senderId !== 'all') {
+    query = query.eq('created_by', senderId)
+  }
+
+  if (fromDate) {
+    query = query.gte('created_at', `${fromDate}T00:00:00.000Z`)
+  }
+
+  if (toDate) {
+    query = query.lte('created_at', `${toDate}T23:59:59.999Z`)
   }
 
   if (q) {
@@ -104,41 +131,33 @@ export default async function IncomingDocumentsPage(props: {
         </Button>
       </div>
 
+      <div className="flex gap-2 pb-2 overflow-x-auto">
+        <Button variant={status === 'all' ? 'default' : 'outline'} asChild className="rounded-full shadow-sm">
+          <Link href={`/documents/incoming?status=all&type=${type}&urgency=${urgency}&q=${q}`}>
+            <Inbox className="w-4 h-4 mr-2" />
+            Tất cả
+          </Link>
+        </Button>
+        <Button variant={status === 'unread' ? 'default' : 'outline'} asChild className="rounded-full shadow-sm text-amber-600 border-amber-200 hover:bg-amber-50">
+          <Link href={`/documents/incoming?status=unread&type=${type}&urgency=${urgency}&q=${q}`}>
+            <Clock className="w-4 h-4 mr-2" />
+            Chưa xem
+          </Link>
+        </Button>
+        <Button variant={status === 'processing' ? 'default' : 'outline'} asChild className="rounded-full shadow-sm text-blue-600 border-blue-200 hover:bg-blue-50">
+          <Link href={`/documents/incoming?status=processing&type=${type}&urgency=${urgency}&q=${q}`}>
+            <CheckCircle2 className="w-4 h-4 mr-2" />
+            Đã tiếp nhận
+          </Link>
+        </Button>
+      </div>
+
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
-        <div className="p-4 border-b border-slate-200 flex flex-col xl:flex-row gap-4 items-start xl:items-center justify-between">
-          <h2 className="font-semibold text-[#1a56db]">Hộp thư đến</h2>
-          <IncomingFilters />
+        <div className="p-4 border-b border-slate-200 flex flex-col gap-4">
+          <IncomingFilters users={users} />
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th className="px-6 py-4 font-medium text-center whitespace-nowrap">Ưu tiên</th>
-                <th className="px-6 py-4 font-medium text-center whitespace-nowrap">Số ký hiệu</th>
-                <th className="px-6 py-4 font-medium text-center whitespace-nowrap">Trích yếu</th>
-                <th className="px-6 py-4 font-medium text-center whitespace-nowrap">Loại văn bản</th>
-                <th className="px-6 py-4 font-medium text-center whitespace-nowrap">Người gửi</th>
-                <th className="px-6 py-4 font-medium text-center whitespace-nowrap">Ngày gửi</th>
-                <th className="px-6 py-4 font-medium text-center whitespace-nowrap">Trạng thái</th>
-                <th className="px-6 py-4 font-medium text-center whitespace-nowrap">Hành động</th>
-              </tr>
-            </thead>
-            <tbody>
-              {documents && documents.length > 0 ? (
-                documents.map((doc) => (
-                  <IncomingDocumentRow key={doc.id} doc={doc} />
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={8} className="px-6 py-8 text-center text-slate-500">
-                    Chưa có công văn nào
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <IncomingTable documents={documents || []} />
         
         <IncomingPagination totalCount={count || 0} limit={limit} />
       </div>

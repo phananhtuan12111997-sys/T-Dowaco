@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useOptimistic } from 'react'
+import Image from 'next/image'
 import { User, MessageCircle, MoreHorizontal, FileText, Download, X, Pencil, Trash2 } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useRouter } from 'next/navigation'
@@ -25,14 +26,26 @@ export function NewsPost({ post, currentUserId, currentUserAvatar, isITAdmin }: 
     }
   }
 
+  const [optimisticReactions, addOptimisticReaction] = useOptimistic(
+    post.reactions || [],
+    (state: any[], newReaction: any) => {
+      const exists = state.find((r) => r.user_id === currentUserId)
+      if (exists && exists.type === newReaction.type) {
+        return state.filter((r) => r.user_id !== currentUserId)
+      }
+      return [...state.filter((r) => r.user_id !== currentUserId), newReaction]
+    }
+  )
+
   const handleReact = (type: string) => {
     setShowPicker(false)
     startTransition(() => {
+      addOptimisticReaction({ user_id: currentUserId, type })
       toggleReaction(post.id, type)
     })
   }
 
-  const myReaction = post.reactions?.find((r: any) => r.user_id === currentUserId)
+  const myReaction = optimisticReactions?.find((r: any) => r.user_id === currentUserId)
   const myReactionIcon = myReaction ? getReactionIcon(myReaction.type) : null
 
   // Process attachments
@@ -40,7 +53,7 @@ export function NewsPost({ post, currentUserId, currentUserAvatar, isITAdmin }: 
   const files = post.attachments?.filter((a: any) => !a.type.startsWith('image/')) || []
 
   // Group reactions for summary
-  const topReactions = post.reactions?.reduce((acc: any, curr: any) => {
+  const topReactions = optimisticReactions?.reduce((acc: any, curr: any) => {
     acc[curr.type] = (acc[curr.type] || 0) + 1
     return acc
   }, {})
@@ -60,12 +73,15 @@ export function NewsPost({ post, currentUserId, currentUserAvatar, isITAdmin }: 
           >
             <X className="h-6 w-6" />
           </button>
-          <img 
-            src={viewingImage} 
-            alt="Full size" 
-            className="max-w-full max-h-full object-contain select-none"
-            onClick={(e) => e.stopPropagation()}
-          />
+          <div className="relative w-full h-full max-w-4xl max-h-[90vh]">
+            <Image 
+              src={viewingImage} 
+              alt="Full size" 
+              fill
+              className="object-contain select-none"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
         </div>
       )}
 
@@ -73,9 +89,9 @@ export function NewsPost({ post, currentUserId, currentUserAvatar, isITAdmin }: 
         {/* Header */}
         <div className="p-4 flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 overflow-hidden shrink-0">
+            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 overflow-hidden shrink-0 relative">
               {post.author_avatar ? (
-                <img src={post.author_avatar} alt={post.author_name} className="w-full h-full object-cover" />
+                <Image src={post.author_avatar} alt={post.author_name} fill className="object-cover" sizes="40px" />
               ) : (
                 <User className="h-6 w-6" />
               )}
@@ -135,11 +151,12 @@ export function NewsPost({ post, currentUserId, currentUserAvatar, isITAdmin }: 
                 }`}
                 onClick={() => setViewingImage(img.url)}
               >
-                <img 
+                <Image 
                   src={img.url} 
                   alt={img.name} 
-                  className="w-full h-full object-cover"
-                  loading="lazy"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
                 />
                 {images.length > 4 && i === 3 && (
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-2xl font-bold">
@@ -178,10 +195,10 @@ export function NewsPost({ post, currentUserId, currentUserAvatar, isITAdmin }: 
         )}
 
         {/* Stats Summary */}
-        {(post.reactions?.length > 0 || post.comments?.length > 0) && (
+        {(optimisticReactions?.length > 0 || post.comments?.length > 0) && (
           <div className="px-4 py-2 flex items-center justify-between text-slate-500 text-sm border-b border-slate-100 mx-2">
             <div className="flex items-center gap-1.5">
-              {post.reactions?.length > 0 && (
+              {optimisticReactions?.length > 0 && (
                 <>
                   <div className="flex -space-x-1">
                     {sortedReactions.map(([type]: any) => (
@@ -190,7 +207,7 @@ export function NewsPost({ post, currentUserId, currentUserAvatar, isITAdmin }: 
                       </span>
                     ))}
                   </div>
-                  <span>{post.reactions.length}</span>
+                  <span>{optimisticReactions.length}</span>
                 </>
               )}
             </div>

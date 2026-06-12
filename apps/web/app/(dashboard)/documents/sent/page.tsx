@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Plus, Search, Star, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { IncomingFilters } from '../incoming/incoming-filters'
+import { SentFilters } from './sent-filters'
 import { IncomingPagination } from '../incoming/incoming-pagination'
 import { SentDocumentRow } from './sent-document-row'
 import { RecipientListModal } from './recipient-list-modal'
@@ -19,6 +19,9 @@ export default async function SentDocumentsPage(props: {
   const q = typeof searchParams.q === 'string' ? searchParams.q : ''
   const type = typeof searchParams.type === 'string' ? searchParams.type : 'all'
   const urgency = typeof searchParams.urgency === 'string' ? searchParams.urgency : 'all'
+  const recipient = typeof searchParams.recipient === 'string' ? searchParams.recipient : 'all'
+  const fromDate = typeof searchParams.from === 'string' ? searchParams.from : ''
+  const toDate = typeof searchParams.to === 'string' ? searchParams.to : ''
   const pageStr = typeof searchParams.page === 'string' ? searchParams.page : '1'
   const page = parseInt(pageStr, 10) || 1
   const limit = 10
@@ -34,6 +37,8 @@ export default async function SentDocumentsPage(props: {
 
   const { data: profile } = await supabase.from('profiles').select('department, is_admin').eq('id', userData.user?.id).single()
   const isITAdmin = profile?.department === 'Phòng IT' || profile?.is_admin
+
+  const { data: allUsers } = await supabase.from('profiles').select('id, full_name, role, department')
 
   // Find IDs of docs created OR forwarded
   const { data: createdDocs } = await supabaseAdmin.from('documents').select('id').eq('created_by', userData.user?.id)
@@ -85,6 +90,20 @@ export default async function SentDocumentsPage(props: {
       }
     }
 
+    if (recipient !== 'all') {
+      const { data: filterRecDocs } = await supabaseAdmin.from('document_recipients').select('document_id').eq('user_id', recipient)
+      const filterRecDocIds = filterRecDocs?.map(r => r.document_id) || []
+      query = query.in('id', filterRecDocIds)
+    }
+
+    if (fromDate) {
+      query = query.gte('created_at', `${fromDate}T00:00:00.000Z`)
+    }
+
+    if (toDate) {
+      query = query.lte('created_at', `${toDate}T23:59:59.999Z`)
+    }
+
     if (q) {
       query = query.or(`symbol_number.ilike.%${q}%,summary.ilike.%${q}%`)
     }
@@ -129,9 +148,8 @@ export default async function SentDocumentsPage(props: {
       </div>
 
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
-        <div className="p-4 border-b border-slate-200 flex flex-col xl:flex-row gap-4 items-start xl:items-center justify-between">
-          <h2 className="font-semibold text-[#1a56db]">Hộp thư đi</h2>
-          <IncomingFilters />
+        <div className="p-4 border-b border-slate-200 flex flex-col gap-4">
+          <SentFilters users={allUsers || []} />
         </div>
 
         <div className="overflow-x-auto">

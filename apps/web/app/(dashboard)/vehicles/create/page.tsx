@@ -16,6 +16,8 @@ import { CompanionSelector } from './companion-selector'
 
 export default async function CreateVehicleRequestPage() {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: profile } = user ? await supabase.from('profiles').select('full_name').eq('id', user.id).single() : { data: null }
   
   // Fetch approver (Nguyễn Văn Hoà)
   const { data: approvers } = await supabase
@@ -52,6 +54,7 @@ export default async function CreateVehicleRequestPage() {
                 <Input 
                   id="requester_name" 
                   name="requester_name" 
+                  defaultValue={profile?.full_name || ''}
                   placeholder="Nhập tên người đi công tác" 
                   required 
                   className="bg-slate-50 border-slate-200 focus-visible:ring-blue-500"
@@ -109,12 +112,11 @@ export default async function CreateVehicleRequestPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="vehicle_info" className="text-slate-700 font-semibold">Phương tiện & Tài xế đề xuất <span className="text-red-500">*</span></Label>
+              <Label htmlFor="vehicle_info" className="text-slate-700 font-semibold">Đề xuất loại xe / tài xế <span className="text-slate-400 font-normal text-sm">(Không bắt buộc)</span></Label>
               <Input 
                 id="vehicle_info" 
                 name="vehicle_info" 
-                placeholder="Ví dụ: Xe Fortuner 7 chỗ - Tài xế Hùng"
-                required
+                placeholder="Ví dụ: Cần xe 7 chỗ, hoặc Xe Fortuner - Tài xế Hùng"
                 className="bg-slate-50 border-slate-200 focus-visible:ring-blue-500"
               />
             </div>

@@ -1,9 +1,10 @@
 import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
-import { Plus, Calendar } from 'lucide-react'
+import { Plus, Calendar, Inbox, Clock, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { TasksSearch } from '../tasks-search'
+import { IncomingTasksFilters } from './incoming-tasks-filters'
+import { IncomingTasksTable } from './incoming-tasks-table'
 import { TaskRow } from '@/components/task-row'
 import { RealtimeRefresh } from '@/components/realtime-refresh'
 
@@ -12,6 +13,12 @@ export default async function IncomingTasksPage(props: {
 }) {
   const searchParams = await props.searchParams;
   const q = typeof searchParams.q === 'string' ? searchParams.q : ''
+  const priority = typeof searchParams.priority === 'string' ? searchParams.priority : 'all'
+  const sender = typeof searchParams.sender === 'string' ? searchParams.sender : 'all'
+  const fromDate = typeof searchParams.from === 'string' ? searchParams.from : ''
+  const toDate = typeof searchParams.to === 'string' ? searchParams.to : ''
+  const statusTab = typeof searchParams.status === 'string' ? searchParams.status : 'all'
+
   const supabase = await createClient()
   const { data: userData } = await supabase.auth.getUser()
 
@@ -55,6 +62,29 @@ export default async function IncomingTasksPage(props: {
     query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`)
   }
 
+  if (priority && priority !== 'all') {
+    query = query.eq('priority', priority)
+  }
+
+  if (sender && sender !== 'all') {
+    query = query.eq('created_by', sender)
+  }
+
+  if (fromDate) {
+    query = query.gte('due_date', fromDate)
+  }
+  
+  if (toDate) {
+    query = query.lte('due_date', toDate)
+  }
+
+  if (statusTab === 'unread') {
+    query = query.eq('task_recipients.status', 'Chưa xem')
+  } else if (statusTab === 'processing') {
+    query = query.eq('task_recipients.processing_status', 'Đang thực hiện')
+  }
+
+
   const { data: tasksData } = await query.order('created_at', { ascending: false })
     
   const senderIds = Array.from(new Set(tasksData?.map(t => t.created_by).filter(Boolean) as string[]))
@@ -64,6 +94,13 @@ export default async function IncomingTasksPage(props: {
     profiles = pData || []
   }
   const profilesMap = new Map(profiles.map(p => [p.id, p.full_name]))
+
+  // Fetch all users for the sender filter
+  const { data: allUsers } = await supabase
+    .from('profiles')
+    .select('id, full_name')
+    .order('full_name')
+
 
   const tasks = tasksData?.map(task => ({
     ...task,
@@ -75,53 +112,52 @@ export default async function IncomingTasksPage(props: {
   return (
     <div className="space-y-6">
       <RealtimeRefresh tables={['tasks', 'task_recipients', 'task_comments']} />
-      <div className="flex justify-end mb-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
+            <span>LKWA</span>
+            <span>→</span>
+            <span>Công việc đã nhận</span>
+          </div>
+          <h1 className="text-xl md:text-2xl font-bold text-[#1a56db]">Công việc đã nhận</h1>
+        </div>
+        
         {!isStaffOnly && (
-          <Button asChild className="bg-blue-600 hover:bg-blue-700">
+          <Button asChild className="bg-blue-600 hover:bg-blue-700 w-full md:w-auto">
             <Link href="/tasks/create">
-              <Plus className="w-4 h-4 mr-2" /> Giao việc mới
+              <Plus className="mr-2 h-4 w-4" /> Giao việc mới
             </Link>
           </Button>
         )}
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 border-b border-slate-200 gap-4">
-          <h2 className="text-lg font-semibold text-[#1a56db]">Công việc đã nhận</h2>
-          <div className="flex w-full md:w-auto">
-            <TasksSearch />
-          </div>
+      <div className="flex gap-2 pb-2 overflow-x-auto">
+        <Button variant={statusTab === 'all' ? 'default' : 'outline'} asChild className="rounded-full shadow-sm">
+          <Link href={`/tasks/incoming?status=all&priority=${priority}&sender=${sender}&q=${q}`}>
+            <Inbox className="w-4 h-4 mr-2" />
+            Tất cả
+          </Link>
+        </Button>
+        <Button variant={statusTab === 'unread' ? 'default' : 'outline'} asChild className="rounded-full shadow-sm text-amber-600 border-amber-200 hover:bg-amber-50">
+          <Link href={`/tasks/incoming?status=unread&priority=${priority}&sender=${sender}&q=${q}`}>
+            <Clock className="w-4 h-4 mr-2" />
+            Chưa xem
+          </Link>
+        </Button>
+        <Button variant={statusTab === 'processing' ? 'default' : 'outline'} asChild className="rounded-full shadow-sm text-blue-600 border-blue-200 hover:bg-blue-50">
+          <Link href={`/tasks/incoming?status=processing&priority=${priority}&sender=${sender}&q=${q}`}>
+            <CheckCircle2 className="w-4 h-4 mr-2" />
+            Đang thực hiện
+          </Link>
+        </Button>
+      </div>
+
+      <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
+        <div className="p-4 border-b border-slate-200 flex flex-col gap-4">
+          <IncomingTasksFilters users={allUsers || []} />
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="text-xs text-slate-700 uppercase bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th className="px-6 py-4 font-semibold">Tên công việc</th>
-                <th className="px-6 py-4 font-semibold">Người giao</th>
-                <th className="px-6 py-4 font-semibold">Độ ưu tiên</th>
-                <th className="px-6 py-4 font-semibold">Thời hạn</th>
-                <th className="px-6 py-4 font-semibold text-center">Trạng thái xử lý</th>
-                <th className="px-6 py-4 font-semibold text-center">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tasks && tasks.length > 0 ? (
-                tasks.map((task) => (
-                  <TaskRow key={task.id} task={task} isSent={false} showActions={true} />
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
-                    <div className="flex flex-col items-center justify-center space-y-2">
-                      <Calendar className="w-8 h-8 text-slate-300" />
-                      <p>Bạn chưa có công việc nào cần thực hiện</p>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+
+        <IncomingTasksTable tasks={tasks || []} />
       </div>
     </div>
   )

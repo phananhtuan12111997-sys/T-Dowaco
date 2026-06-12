@@ -5,6 +5,12 @@ import { Badge } from '@/components/ui/badge'
 import { RecipientListModal } from '@/app/(dashboard)/documents/sent/recipient-list-modal'
 import { StatusDetailsModal } from '@/app/(dashboard)/documents/sent/status-details-modal'
 import { SentDocumentActions } from '@/app/(dashboard)/documents/sent/sent-document-actions'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 export function SentDocumentRow({ doc, currentUserId, isITAdmin }: { doc: any, currentUserId?: string, isITAdmin?: boolean }) {
   const router = useRouter()
@@ -31,8 +37,17 @@ export function SentDocumentRow({ doc, currentUserId, isITAdmin }: { doc: any, c
         )}
       </td>
       <td className="px-6 py-4 font-medium text-slate-900 text-center">{doc.symbol_number}</td>
-      <td className="px-6 py-4 text-slate-600 max-w-md truncate text-center" title={doc.summary}>
-        {doc.summary}
+      <td className="px-6 py-4 text-slate-600 max-w-[250px] md:max-w-xs text-left">
+        <TooltipProvider delayDuration={300}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="truncate block cursor-help">{doc.summary}</span>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-[400px] whitespace-normal break-words p-3 bg-slate-800 text-slate-50">
+              <p className="text-sm">{doc.summary}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </td>
       <td className="px-6 py-4 text-center">
         <Badge variant="outline" className="bg-cyan-50 text-cyan-600 border-cyan-200 font-normal whitespace-nowrap">

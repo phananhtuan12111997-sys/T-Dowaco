@@ -208,9 +208,10 @@ export async function updateVehicleRequest(id: string, formData: FormData) {
 
   const { data: profile } = await supabase.from('profiles').select('department, is_admin').eq('id', user.id).single()
   const isITAdmin = profile?.department === 'Phòng IT' || profile?.is_admin
+  const isHR = profile?.department === 'Phòng tổ chức Hành chánh'
 
   let error;
-  if (isITAdmin) {
+  if (isITAdmin || isHR) {
     const supabaseAdmin = createSupabaseClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,

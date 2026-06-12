@@ -201,6 +201,28 @@ export function UserActions({ user }: { user: any }) {
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="cccd">CCCD/CMND</Label>
+                <Input id="cccd" name="cccd" defaultValue={user.cccd || ''} placeholder="Tùy chọn" pattern="^[0-9]+$" title="Chỉ được nhập số" onInput={(e) => { e.currentTarget.value = e.currentTarget.value.replace(/[^0-9]/g, '') }} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="hometown">Quê quán</Label>
+                <Input id="hometown" name="hometown" defaultValue={user.hometown || ''} placeholder="Tùy chọn" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="social_insurance_number">Số bảo hiểm (BHXH)</Label>
+                <Input id="social_insurance_number" name="social_insurance_number" defaultValue={user.social_insurance_number || ''} placeholder="Tùy chọn" pattern="^[0-9]+$" title="Chỉ được nhập số" onInput={(e) => { e.currentTarget.value = e.currentTarget.value.replace(/[^0-9]/g, '') }} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="health_insurance_number">Số thẻ BHYT</Label>
+                <Input id="health_insurance_number" name="health_insurance_number" defaultValue={user.health_insurance_number || ''} placeholder="Tùy chọn" pattern="^[0-9]+$" title="Chỉ được nhập số" onInput={(e) => { e.currentTarget.value = e.currentTarget.value.replace(/[^0-9]/g, '') }} />
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="avatar">Ảnh đại diện (mới)</Label>
               <Input id="avatar" name="avatar" type="file" accept="image/*" />

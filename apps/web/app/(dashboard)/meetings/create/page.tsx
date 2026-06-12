@@ -116,7 +116,7 @@ export default async function CreateMeetingPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description" className="text-slate-700 font-semibold">Nội dung / Thành phần tham dự</Label>
+              <Label htmlFor="description" className="text-slate-700 font-semibold">Nội dung cuộc họp / Ghi chú thêm</Label>
               <Textarea 
                 id="description" 
                 name="description" 
@@ -130,7 +130,7 @@ export default async function CreateMeetingPage() {
               <Button type="button" variant="outline" asChild className="border-slate-300 text-slate-700">
                 <Link href="/meetings">Hủy bỏ</Link>
               </Button>
-              <SubmitButton className="bg-emerald-500 hover:bg-emerald-600 text-white px-8" loadingText="Đang tạo...">
+              <SubmitButton className="bg-blue-600 hover:bg-blue-700 text-white px-8" loadingText="Đang tạo...">
                 Tạo lịch họp
               </SubmitButton>
             </div>

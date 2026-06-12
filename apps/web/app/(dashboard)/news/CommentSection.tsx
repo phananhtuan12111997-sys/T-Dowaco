@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useTransition, useRef } from 'react'
+import { useState, useTransition, useRef, useOptimistic } from 'react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { User, CornerDownRight, Loader2, Image as ImageIcon, X, MoreHorizontal, Pencil, Trash2, History } from 'lucide-react'
@@ -32,9 +33,9 @@ function MentionDropdown({ text, onSelect, users }: { text: string, onSelect: (v
             onSelect(newText)
           }}
         >
-          <div className="h-6 w-6 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+          <div className="h-6 w-6 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden shrink-0 relative">
             {u.avatar_url ? (
-              <img src={u.avatar_url} alt={u.full_name} className="w-full h-full object-cover" />
+              <Image src={u.avatar_url} alt={u.full_name} fill className="object-cover" sizes="24px" />
             ) : (
               <User className="h-3 w-3 text-slate-500" />
             )}
@@ -80,6 +81,13 @@ export function CommentSection({ newsId, comments, currentUserId, currentUserAva
   const [isPending, startTransition] = useTransition()
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
   
+  const [optimisticComments, addOptimisticComment] = useOptimistic(
+    comments,
+    (state: any[], newComment: any) => {
+      return [...state, newComment]
+    }
+  )
+  
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [viewingImage, setViewingImage] = useState<string | null>(null)
@@ -124,6 +132,16 @@ export function CommentSection({ newsId, comments, currentUserId, currentUserAva
       }
 
       startTransition(async () => {
+        addOptimisticComment({
+          id: Math.random().toString(),
+          content: textToSubmit,
+          image_url: imageUrl,
+          parent_id: parentId,
+          author_id: currentUserId,
+          author_name: 'Bạn',
+          author_avatar: currentUserAvatar,
+          created_at: new Date().toISOString()
+        })
         await addComment(newsId, textToSubmit, parentId, imageUrl)
         if (!parentId) {
           setContent('')
@@ -140,8 +158,8 @@ export function CommentSection({ newsId, comments, currentUserId, currentUserAva
   }
 
   // Organize comments into parent/child structure
-  const topLevelComments = comments.filter(c => !c.parent_id)
-  const replies = comments.filter(c => c.parent_id)
+  const topLevelComments = optimisticComments.filter(c => !c.parent_id)
+  const replies = optimisticComments.filter(c => c.parent_id)
 
   return (
     <div className="pt-4 border-t border-slate-100">
@@ -154,12 +172,15 @@ export function CommentSection({ newsId, comments, currentUserId, currentUserAva
           >
             <X className="h-6 w-6" />
           </button>
-          <img 
-            src={viewingImage} 
-            alt="Full size comment" 
-            className="max-w-full max-h-full object-contain select-none"
-            onClick={(e) => e.stopPropagation()}
-          />
+          <div className="relative w-full h-full max-w-4xl max-h-[90vh]">
+            <Image 
+              src={viewingImage} 
+              alt="Full size comment" 
+              fill
+              className="object-contain select-none"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
         </div>
       )}
 
@@ -196,9 +217,9 @@ export function CommentSection({ newsId, comments, currentUserId, currentUserAva
             </div>
           )}
           <form onSubmit={(e) => handleSubmit(e, null)} className="flex gap-2 items-center">
-            <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
+            <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0 overflow-hidden relative">
               {currentUserAvatar ? (
-                <img src={currentUserAvatar} alt="Avatar" className="w-full h-full object-cover" />
+                <Image src={currentUserAvatar} alt="Avatar" fill className="object-cover" sizes="32px" />
               ) : (
                 <User className="h-4 w-4 text-slate-500" />
               )}
@@ -299,9 +320,9 @@ function CommentItem({ comment, replies, currentUserId, currentUserAvatar, onRep
   return (
     <div className="space-y-2">
       <div className="flex gap-2 group">
-        <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0 mt-1 overflow-hidden">
+        <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0 mt-1 overflow-hidden relative">
           {comment.author_avatar ? (
-            <img src={comment.author_avatar} alt={comment.author_name} className="w-full h-full object-cover" />
+            <Image src={comment.author_avatar} alt={comment.author_name} fill className="object-cover" sizes="32px" />
           ) : (
             <User className="h-4 w-4 text-slate-500" />
           )}
@@ -354,7 +375,7 @@ function CommentItem({ comment, replies, currentUserId, currentUserAvatar, onRep
           </div>
           
           {comment.image_url && !isEditing && (
-            <div className="mt-1 ml-1 cursor-pointer" onClick={() => onViewImage(comment.image_url)}>
+            <div className="mt-1 ml-1 cursor-pointer relative h-32 w-auto max-w-xs" onClick={() => onViewImage(comment.image_url)}>
               <img src={comment.image_url} alt="Comment attachment" className="h-32 w-auto max-w-xs object-cover rounded-xl border border-slate-200 hover:opacity-90 transition-opacity" />
             </div>
           )}
@@ -430,9 +451,9 @@ function CommentItem({ comment, replies, currentUserId, currentUserAvatar, onRep
             </div>
           )}
           <form onSubmit={handleReplySubmit} className="flex gap-2 items-center">
-            <div className="h-6 w-6 rounded-full bg-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
+            <div className="h-6 w-6 rounded-full bg-slate-200 flex items-center justify-center shrink-0 overflow-hidden relative">
               {currentUserAvatar ? (
-                <img src={currentUserAvatar} alt="Avatar" className="w-full h-full object-cover" />
+                <Image src={currentUserAvatar} alt="Avatar" fill className="object-cover" sizes="24px" />
               ) : (
                 <User className="h-3 w-3 text-slate-500" />
               )}
@@ -536,9 +557,9 @@ function ReplyItem({ reply, currentUserId, onViewImage, onReply, isITAdmin }: an
 
   return (
     <div className="flex gap-2 group">
-      <div className="h-6 w-6 rounded-full bg-slate-200 flex items-center justify-center shrink-0 mt-1 overflow-hidden">
+      <div className="h-6 w-6 rounded-full bg-slate-200 flex items-center justify-center shrink-0 mt-1 overflow-hidden relative">
         {reply.author_avatar ? (
-          <img src={reply.author_avatar} alt={reply.author_name} className="w-full h-full object-cover" />
+          <Image src={reply.author_avatar} alt={reply.author_name} fill className="object-cover" sizes="24px" />
         ) : (
           <User className="h-3 w-3 text-slate-500" />
         )}

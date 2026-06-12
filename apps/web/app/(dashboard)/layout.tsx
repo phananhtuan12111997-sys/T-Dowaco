@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Link from "next/link";
+import Image from "next/image";
 import { 
   FileText, 
   Calendar, 
@@ -94,7 +95,7 @@ export default async function DashboardLayout({
       {/* Sidebar - hidden on mobile, visible on lg screens */}
       <aside className="w-64 bg-[#1a56db] text-white hidden lg:flex flex-col min-h-screen fixed left-0 top-0 z-20">
         <Link href="/" className="h-20 flex items-center justify-center gap-3 border-b border-blue-500/30 hover:bg-blue-800/40 transition-colors">
-          <img src="/logo.png" alt="Logo" className="h-12 w-auto object-contain" />
+          <Image src="/logo.png" alt="Logo" width={48} height={48} className="h-12 w-auto object-contain" priority />
           <span className="font-bold text-xl tracking-wider">LKWA</span>
         </Link>
         <nav className="flex-1 py-4">
