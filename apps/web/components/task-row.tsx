@@ -61,7 +61,7 @@ export function TaskRow({
     if (target.closest('button') || target.closest('a') || target.closest('.no-row-click')) {
       return
     }
-    router.push(`/tasks/${task.id}?from=${isSent ? 'sent' : 'incoming'}`)
+    router.push(`/cong-viec/${task.id}?from=${isSent ? 'sent' : 'incoming'}`)
   }
 
   const isUnread = !isSent && task.read_status === 'Chưa xem'
@@ -131,7 +131,7 @@ export function TaskRow({
           <div className="flex justify-center gap-2">
             <button 
               className="h-8 w-8 inline-flex items-center justify-center rounded-md text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors" 
-              onClick={() => router.push(`/tasks/${task.id}?from=${isSent ? 'sent' : 'incoming'}`)}
+              onClick={() => router.push(`/cong-viec/${task.id}?from=${isSent ? 'sent' : 'incoming'}`)}
               title="Xem chi tiết"
             >
               <Eye className="w-4 h-4" />

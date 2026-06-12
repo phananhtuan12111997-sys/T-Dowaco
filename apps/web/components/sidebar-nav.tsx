@@ -19,29 +19,29 @@ export function SidebarNav({ isAdmin, counts }: SidebarNavProps) {
       <SidebarCollapsible 
         icon={<FileText size={18} />} 
         text="Quản lý Công văn" 
-        basePath="/documents"
+        basePath="/cong-van"
         badge={counts?.documents}
         items={[
-          { href: "/documents/incoming", text: "Công văn đến", badge: counts?.documents },
-          { href: "/documents/sent", text: "Công văn đã gửi" }
+          { href: "/cong-van/den", text: "Công văn đến", badge: counts?.documents },
+          { href: "/cong-van/di", text: "Công văn đã gửi" }
         ]}
       />
       <SidebarCollapsible 
         icon={<CheckSquare size={18} />} 
         text="Quản lý Công việc" 
-        basePath="/tasks"
+        basePath="/cong-viec"
         badge={counts?.tasks}
         items={[
-          { href: "/tasks/incoming", text: "Công việc đã nhận", badge: counts?.tasks },
-          { href: "/tasks/sent", text: "Công việc đã giao" }
+          { href: "/cong-viec/duoc-giao", text: "Công việc đã nhận", badge: counts?.tasks },
+          { href: "/cong-viec/da-giao", text: "Công việc đã giao" }
         ]}
       />
-      <SidebarItem href="/meetings" icon={<Calendar size={18} />} text="Quản lý Lịch họp" badge={counts?.meetings} />
-      <SidebarItem href="/payslips" icon={<Banknote size={18} />} text="Quản lý Phiếu lương" />
-      <SidebarItem href="/vehicles" icon={<Car size={18} />} text="Quản lý Xin xe" />
-      <SidebarItem href="/news" icon={<Newspaper size={18} />} text="Bảng tin Nội bộ" />
+      <SidebarItem href="/cuoc-hop" icon={<Calendar size={18} />} text="Quản lý Lịch họp" badge={counts?.meetings} />
+      <SidebarItem href="/bang-luong" icon={<Banknote size={18} />} text="Quản lý Phiếu lương" />
+      <SidebarItem href="/xe" icon={<Car size={18} />} text="Quản lý Xin xe" />
+      <SidebarItem href="/bang-tin" icon={<Newspaper size={18} />} text="Bảng tin Nội bộ" />
       {isAdmin && (
-        <SidebarItem href="/hr" icon={<Users size={18} />} text="Quản lý Nhân sự" />
+        <SidebarItem href="/nhan-su" icon={<Users size={18} />} text="Quản lý Nhân sự" />
       )}
     </ul>
   );

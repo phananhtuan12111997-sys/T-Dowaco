@@ -99,7 +99,7 @@ export function Header({ profile }: { profile: Profile | null }) {
             <DropdownMenuLabel>Tài khoản của tôi</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild className="cursor-pointer">
-              <Link href="/profile" className="flex items-center w-full">
+              <Link href="/ho-so" className="flex items-center w-full">
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Cập nhật thông tin</span>
               </Link>

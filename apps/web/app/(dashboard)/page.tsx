@@ -95,44 +95,44 @@ export default async function Home() {
       {/* Cards Grid */}
       <div className="grid grid-cols-3 gap-4 mt-8">
         <DashboardCard 
-          href="/documents" 
+          href="/cong-van" 
           icon={<FileText size={32} className="text-blue-500" />} 
           title="Công Văn" 
           description="Quản lý văn bản đến/đi" 
         />
         <DashboardCard 
-          href="/news" 
+          href="/bang-tin" 
           icon={<Newspaper size={32} className="text-teal-500" />} 
           title="Tin Nội Bộ" 
           description="Thông báo công ty" 
         />
         <DashboardCard 
-          href="/meetings" 
+          href="/cuoc-hop" 
           icon={<Calendar size={32} className="text-orange-500" />} 
           title="Lịch Họp" 
           description="Đăng ký phòng họp" 
         />
         <DashboardCard 
-          href="/tasks" 
+          href="/cong-viec" 
           icon={<CheckSquare size={32} className="text-green-500" />} 
           title="Giao Việc" 
           description="Theo dõi tiến độ" 
         />
         <DashboardCard 
-          href="/vehicles" 
+          href="/xe" 
           icon={<Car size={32} className="text-purple-500" />} 
           title="Điều Xe" 
           description="Đăng ký xe công tác" 
         />
         <DashboardCard 
-          href="/payslips" 
+          href="/bang-luong" 
           icon={<Banknote size={32} className="text-slate-600" />} 
           title="Phiếu Lương" 
           description="Tra cứu thu nhập cá nhân" 
         />
         {canAccessHR && (
           <DashboardCard 
-            href="/hr" 
+            href="/nhan-su" 
             icon={<Users size={32} className="text-indigo-500" />} 
             title="Nhân Sự" 
             description="Quản lý nhân sự" 

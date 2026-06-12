@@ -66,7 +66,7 @@ export async function deleteDocument(documentId: string) {
     }
   }
 
-  revalidatePath('/documents/sent')
+  revalidatePath('/cong-van/di')
   return { success: true }
 }
 

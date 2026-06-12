@@ -83,31 +83,31 @@ export async function updateSession(request: NextRequest) {
     const hasAllowedMeetingRole = allowedMeetingRoles.includes(profile?.role || '')
     const canManageMeetings = isAdmin || isBanDieuHanh || isToChucHanhChanh || hasAllowedMeetingRole
 
-    // Prevent access to /hr if not admin or HR
-    if (path.startsWith('/hr') && !canManageHR) {
+    // Prevent access to /nhan-su if not admin or HR
+    if (path.startsWith('/nhan-su') && !canManageHR) {
       const url = request.nextUrl.clone()
       url.pathname = '/'
       return NextResponse.redirect(url)
     }
 
-    // Prevent access to /news/create if not admin or HR
-    if (path.startsWith('/news/create') && !canPostNews) {
+    // Prevent access to /bang-tin/create if not admin or HR
+    if (path.startsWith('/bang-tin/create') && !canPostNews) {
       const url = request.nextUrl.clone()
-      url.pathname = '/news'
+      url.pathname = '/bang-tin'
       return NextResponse.redirect(url)
     }
 
-    // Prevent access to /payslips/create if not admin or Accountant
-    if (path.startsWith('/payslips/create') && !canCreatePayslip) {
+    // Prevent access to /bang-luong/create if not admin or Accountant
+    if (path.startsWith('/bang-luong/create') && !canCreatePayslip) {
       const url = request.nextUrl.clone()
-      url.pathname = '/payslips'
+      url.pathname = '/bang-luong'
       return NextResponse.redirect(url)
     }
 
-    // Prevent access to /meetings/create and /meetings/edit if not allowed
-    if ((path.startsWith('/meetings/create') || path.startsWith('/meetings/edit')) && !canManageMeetings) {
+    // Prevent access to /cuoc-hop/create and /cuoc-hop/edit if not allowed
+    if ((path.startsWith('/cuoc-hop/create') || path.startsWith('/cuoc-hop/edit')) && !canManageMeetings) {
       const url = request.nextUrl.clone()
-      url.pathname = '/meetings'
+      url.pathname = '/cuoc-hop'
       return NextResponse.redirect(url)
     }
 

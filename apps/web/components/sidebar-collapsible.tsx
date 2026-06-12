@@ -47,10 +47,10 @@ export function SidebarCollapsible({ icon, text, items, basePath, badge }: Sideb
         <ul className="bg-[#1748b8] py-2">
           {items.map((item) => {
             const fromParam = searchParams?.get('from')
-            const isTaskDetailMatch = pathname.startsWith('/tasks/') && fromParam && item.href === `/tasks/${fromParam}`
+            const isTaskDetailMatch = pathname.startsWith('/cong-viec/') && fromParam && item.href === `/cong-viec/${fromParam}`
             
             const isActive = pathname.startsWith(item.href) || 
-                             (item.href === '/documents/incoming' && pathname === '/documents/create') ||
+                             (item.href === '/cong-van/den' && pathname === '/cong-van/create') ||
                              isTaskDetailMatch
             return (
               <li key={item.href}>

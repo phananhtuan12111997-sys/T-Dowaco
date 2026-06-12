@@ -130,25 +130,25 @@ export function NotificationBell() {
     
     setIsOpen(false)
 
-    if (notif.message.includes('[Bảng tin]')) {
+    if (notif.message.includes('[Bản tin]') || notif.message.includes('[Bảng tin]')) {
       // document_id is the news UUID
       if (notif.document_id) {
-        router.push(`/news/${notif.document_id}`)
+        router.push(`/bang-tin/${notif.document_id}`)
       }
       return
     }
 
     if (notif.message.includes('Lịch họp')) {
       if (notif.document_id) {
-        router.push(`/meetings/${notif.document_id}`)
+        router.push(`/cuoc-hop/${notif.document_id}`)
       } else {
-        router.push(`/meetings`)
+        router.push(`/cuoc-hop`)
       }
       return
     }
 
     if (notif.message.includes('xin xe') || notif.message.includes('đăng ký xe') || notif.message.includes('chuyến đi xe')) {
-      router.push(`/vehicles?id=${notif.document_id}`)
+      router.push(`/xe?id=${notif.document_id}`)
       return
     }
 
@@ -158,17 +158,17 @@ export function NotificationBell() {
     }
 
     if (notif.message.includes('trả lời/báo cáo')) {
-      router.push(`/documents/sent/${notif.document_id}`)
+      router.push(`/cong-van/di/${notif.document_id}`)
     } else if (notif.message.toLowerCase().includes('công việc')) {
       if (notif.message.includes('gửi báo cáo')) {
-        router.push(`/tasks/${notif.document_id}?action=approve`)
+        router.push(`/cong-viec/${notif.document_id}?action=approve`)
       } else if (notif.message.includes('bình luận')) {
-        router.push(`/tasks/${notif.document_id}?action=comment`)
+        router.push(`/cong-viec/${notif.document_id}?action=comment`)
       } else {
-        router.push(`/tasks/${notif.document_id}`)
+        router.push(`/cong-viec/${notif.document_id}`)
       }
     } else {
-      router.push(`/documents/incoming/${notif.document_id}`)
+      router.push(`/cong-van/den/${notif.document_id}`)
     }
   }
 

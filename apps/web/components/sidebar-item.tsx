@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation";
 
 export function SidebarItem({ href, icon, text, badge }: { href: string; icon: React.ReactNode; text: string; badge?: number }) {
   const pathname = usePathname();
-  // We use startsWith to match sub-paths (e.g. /payslips/view matches /payslips)
-  // However, we should be careful if there are overlapping paths like /meetings and /meetings-archived
+  // We use startsWith to match sub-paths (e.g. /bang-luong/view matches /bang-luong)
+  // However, we should be careful if there are overlapping paths like /cuoc-hop and /cuoc-hop-archived
   // In this app, paths are distinct enough so startsWith works well.
   const isActive = pathname.startsWith(href);
   

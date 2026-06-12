@@ -86,7 +86,7 @@ export async function completeDocumentProcessing(documentId: string, userId: str
     })
   }
 
-  revalidatePath('/documents/sent')
-  revalidatePath(`/documents/sent/${documentId}`)
+  revalidatePath('/cong-van/di')
+  revalidatePath(`/cong-van/di/${documentId}`)
   return { success: true }
 }
