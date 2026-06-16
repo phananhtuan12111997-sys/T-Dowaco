@@ -76,16 +76,17 @@ export default function BulkUploadPayslips() {
           }
         }
         
-        const sheet = workbook.Sheets[targetSheetName]
+        const sheet = workbook.Sheets[targetSheetName!]
         
         // Convert to JSON, starting from the row containing headers.
-        const rawJson: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 })
+        const rawJson: any[][] = XLSX.utils.sheet_to_json(sheet!, { header: 1 })
         
         // Find header row (the one containing "HỌ VÀ TÊN" or "Họ và tên")
         let headerRowIdx = -1
         for (let i = 0; i < rawJson.length; i++) {
           const row = rawJson[i]
-          if (row.some(cell => typeof cell === 'string' && cell.toUpperCase().includes('HỌ VÀ TÊN'))) {
+          if (!row) continue
+          if (row.some(cell => typeof cell === 'string' && cell.toUpperCase().includes('HỌ VÀ TÊN') || cell === 'Họ và tên')) {
             headerRowIdx = i
             break
           }
@@ -131,8 +132,9 @@ export default function BulkUploadPayslips() {
     setError(null)
 
     try {
-      const nameKey = Object.keys(parsedData[0]).find(k => k.toUpperCase().includes('HỌ VÀ TÊN') || k.toUpperCase().includes('HỌ TÊN')) || 'HỌ VÀ TÊN'
-      const totalKey = Object.keys(parsedData[0]).find(k => {
+      const firstRow = parsedData[0] || {} as any
+      const nameKey = Object.keys(firstRow).find(k => k.toUpperCase().includes('HỌ VÀ TÊN') || k.toUpperCase().includes('HỌ TÊN')) || 'HỌ VÀ TÊN'
+      const totalKey = Object.keys(firstRow).find(k => {
         const clean = k.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "").toUpperCase();
         return clean.includes('THUCLANH') || clean.includes('QUATHEATM');
       }) || 'Lương trả qua thẻ ATM (VNĐ)'

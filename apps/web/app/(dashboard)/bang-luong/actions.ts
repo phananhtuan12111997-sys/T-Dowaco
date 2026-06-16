@@ -112,8 +112,8 @@ export async function uploadBulkPayslips(payload: {
       }
     })
 
-    const payslipsToInsert = []
-    const notificationsToInsert = []
+    const payslipsToInsert: any[] = []
+    const notificationsToInsert: any[] = []
 
     // 2. Map data
     for (const row of payload.data) {
@@ -162,14 +162,27 @@ export async function uploadBulkPayslips(payload: {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    // 3. Xoá các phiếu lương cũ của tháng/năm này nếu upload đè (Tuỳ chọn: ở đây ta cho phép xoá cũ tạo mới)
-    const matchedUserIds = payslipsToInsert.map(p => p.user_id)
-    await supabaseAdmin
+    // 3. Xoá các phiếu lương cũ của tháng/năm này nếu upload đè
+    // Đầu tiên lấy danh sách payslip id cũ để xoá notifications tương ứng
+    const { data: oldPayslips } = await supabaseAdmin
       .from('payslips')
-      .delete()
-      .in('user_id', matchedUserIds)
+      .select('id')
       .eq('month', payload.month)
       .eq('year', payload.year)
+      
+    if (oldPayslips && oldPayslips.length > 0) {
+      const oldPayslipIds = oldPayslips.map(p => p.id)
+      await supabaseAdmin
+        .from('notifications')
+        .delete()
+        .in('document_id', oldPayslipIds)
+
+      await supabaseAdmin
+        .from('payslips')
+        .delete()
+        .eq('month', payload.month)
+        .eq('year', payload.year)
+    }
 
     // 4. Insert Payslips
     const { data: insertedPayslips, error: insertError } = await supabaseAdmin
@@ -204,3 +217,63 @@ export async function uploadBulkPayslips(payload: {
     return { success: false, error: err.message || 'Lỗi không xác định' }
   }
 }
+
+export async function revokeMonthPayslips(month: number, year: number) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { success: false, error: 'Chưa đăng nhập' }
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('department, is_admin')
+    .eq('id', user.id)
+    .single()
+
+  const isHR = profile?.department?.toLowerCase().includes('tổ chức') || profile?.department?.toLowerCase().includes('kế hoạch')
+  const isAccountant = profile?.department?.toLowerCase().includes('kế toán')
+  const isAdmin = profile?.is_admin === true
+  
+  if (!isAdmin && !isHR && !isAccountant) {
+    return { success: false, error: 'Bạn không có quyền thực hiện chức năng này' }
+  }
+
+  try {
+    const supabaseAdmin = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    // Lấy danh sách payslip id của tháng/năm này
+    const { data: payslips } = await supabaseAdmin
+      .from('payslips')
+      .select('id')
+      .eq('month', month)
+      .eq('year', year)
+
+    if (payslips && payslips.length > 0) {
+      const payslipIds = payslips.map(p => p.id)
+
+      // Xóa notifications
+      await supabaseAdmin
+        .from('notifications')
+        .delete()
+        .in('document_id', payslipIds)
+
+      // Xóa payslips
+      await supabaseAdmin
+        .from('payslips')
+        .delete()
+        .eq('month', month)
+        .eq('year', year)
+    }
+
+    revalidatePath('/bang-luong')
+    return { success: true }
+  } catch (err: any) {
+    console.error('Revoke error:', err)
+    return { success: false, error: err.message || 'Lỗi khi thu hồi bảng lương' }
+  }
+}
+

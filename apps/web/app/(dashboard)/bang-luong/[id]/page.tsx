@@ -53,7 +53,7 @@ export default async function PayslipDetailPage({ params }: { params: { id: stri
   const { data: profileData } = await supabaseAdmin.from('profiles').select('full_name, department, role').eq('id', payslip.user_id).single()
 
   const details = payslip.details || {}
-  const profile = profileData || {}
+  const profile: any = profileData || {}
 
   const formatMoney = (val: any) => {
     if (typeof val === 'number') return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val)

@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { markAsRead } from './actions'
+import PayslipListClient from './PayslipListClient'
 
 // Hàm format tiền tệ (VND)
 const formatCurrency = (amount: number) => {
@@ -141,84 +142,8 @@ export default async function PayslipsPage({
             </Select>
           </div>
         </div>
-
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="text-xs font-bold text-white uppercase bg-[#1a56db] border-b border-[#1a56db] [&_th]:font-bold [&_th]:whitespace-nowrap">
-              <tr>
-                <th className="px-6 py-4 font-medium">THÁNG</th>
-                <th className="px-6 py-4 font-medium">TIÊU ĐỀ</th>
-                <th className="px-6 py-4 font-medium text-right">TỔNG LƯƠNG (THỰC NHẬN)</th>
-                <th className="px-6 py-4 font-medium text-center">FILE ĐÍNH KÈM</th>
-                <th className="px-6 py-4 font-medium text-center">TRẠNG THÁI</th>
-                <th className="px-6 py-4 font-medium text-center">THAO TÁC</th>
-              </tr>
-            </thead>
-            <tbody>
-              {payslips && payslips.length > 0 ? (
-                payslips.map((slip: any) => {
-                  let netSalary = slip.net_salary || 0
-                  if (netSalary === 0 && slip.details) {
-                    const totalKey = Object.keys(slip.details).find(k => {
-                      const clean = k.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "").toUpperCase();
-                      return clean.includes('THUCLANH') || clean.includes('QUATHEATM');
-                    })
-                    if (totalKey && slip.details[totalKey]) {
-                      const val = slip.details[totalKey]
-                      if (typeof val === 'number') netSalary = val
-                      else if (typeof val === 'string') {
-                        const num = parseFloat(val.replace(/[^0-9.-]+/g,""))
-                        if (!isNaN(num)) netSalary = num
-                      }
-                    }
-                  }
-                  
-                  return (
-                  <tr key={slip.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 font-medium text-slate-900">
-                      Tháng {slip.month}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-slate-800 font-medium">
-                        {`Phiếu lương tháng ${slip.month}/${slip.year}`}
-                        {canUpload && slip.profiles?.full_name ? ` - ${slip.profiles.full_name}` : ''}
-                      </div>
-                      <div className="text-xs text-slate-400 mt-1">Cập nhật: {new Date(slip.created_at).toLocaleDateString('vi-VN')}</div>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <span className="font-bold text-emerald-600">
-                        {formatCurrency(netSalary)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      {slip.attachment_url ? (
-                        <Button variant="ghost" size="sm" className="text-green-600 hover:text-green-700 hover:bg-green-50">
-                          <FileSpreadsheet className="h-4 w-4 mr-2" /> Tải Excel
-                        </Button>
-                      ) : (
-                        <span className="text-slate-400 italic text-xs">Không có file</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <StatusBadge status={slip.status} />
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <ViewButton id={slip.id} />
-                    </td>
-                  </tr>
-                )})
-              ) : (
-                <tr>
-                  <td colSpan={6} className="px-6 py-16 text-center">
-                    <div className="flex flex-col items-center justify-center text-slate-400">
-                      <Info className="h-8 w-8 mb-2 opacity-20" />
-                      <p>Không có dữ liệu phiếu lương cho năm {selectedYear}</p>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          <PayslipListClient payslips={payslips} canUpload={canUpload} selectedYear={selectedYear} />
         </div>
       </div>
     </div>
