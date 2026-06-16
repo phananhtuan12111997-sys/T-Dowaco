@@ -1,122 +1,285 @@
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { createPayslip } from '../actions'
-import Link from 'next/link'
-import { FileSpreadsheet, Upload } from 'lucide-react'
+'use client'
 
-export default function CreatePayslipPage() {
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { Upload, FileSpreadsheet, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
+import * as XLSX from 'xlsx'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { uploadBulkPayslips } from '../actions'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Label } from '@/components/ui/label'
+
+type RowData = Record<string, any>
+
+export default function BulkUploadPayslips() {
+  const router = useRouter()
+  const [isDragging, setIsDragging] = useState(false)
+  const [file, setFile] = useState<File | null>(null)
+  const [parsedData, setParsedData] = useState<RowData[]>([])
+  const [isUploading, setIsUploading] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  
   const currentYear = new Date().getFullYear()
   const currentMonth = new Date().getMonth() + 1
-  
-  return (
-    <div className="space-y-6 max-w-2xl mx-auto">
-      <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
-        <span>LKWA</span>
-        <span>→</span>
-        <Link href="/bang-luong" className="hover:text-[#1a56db]">Tra cứu lương</Link>
-        <span>→</span>
-        <span>Nhập phiếu lương (Dành cho Kế toán)</span>
-      </div>
-      
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-        <div className="p-6 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
-          <div>
-            <h2 className="text-xl font-bold text-[#1a56db]">Tạo Phiếu Lương Mới</h2>
-            <p className="text-sm text-slate-500 mt-1">Tính năng nhập liệu dành riêng cho phòng Kế toán</p>
-          </div>
-          <div className="p-3 bg-blue-100 rounded-full text-blue-600">
-            <FileSpreadsheet className="h-6 w-6" />
-          </div>
-        </div>
+  const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth.toString())
+  const [selectedYear, setSelectedYear] = useState<string>(currentYear.toString())
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+    const droppedFile = e.dataTransfer.files[0]
+    if (droppedFile && (droppedFile.name.endsWith('.xlsx') || droppedFile.name.endsWith('.xls'))) {
+      processFile(droppedFile)
+    } else {
+      setError('Vui lòng chọn file Excel hợp lệ (.xlsx hoặc .xls)')
+    }
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0]
+    if (selectedFile) {
+      processFile(selectedFile)
+    }
+  }
+
+  const processFile = (file: File) => {
+    setFile(file)
+    setError(null)
+    setSuccess(false)
+    
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        const data = e.target?.result
+        const workbook = XLSX.read(data, { type: 'binary' })
+        const sheetName = workbook.SheetNames[0]
+        const sheet = workbook.Sheets[sheetName]
         
-        <div className="p-6">
-          <form action={createPayslip} className="space-y-6">
-            
-            {/* TRONG THỰC TẾ: Sẽ có input chọn Nhân Viên. Ở đây tạm ẩn để tự gửi cho chính mình test */}
-            
-            <div className="space-y-2">
-              <Label htmlFor="title" className="text-slate-700 font-semibold">Tiêu đề phiếu lương <span className="text-red-500">*</span></Label>
-              <Input 
-                id="title" 
-                name="title" 
-                defaultValue={`Phiếu lương tháng ${currentMonth}/${currentYear}`}
-                required 
-                className="bg-slate-50 border-slate-200 focus-visible:ring-blue-500"
-              />
-            </div>
+        // Convert to JSON, starting from the row containing headers.
+        const rawJson: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 })
+        
+        // Find header row (the one containing "HỌ VÀ TÊN" or "Họ và tên")
+        let headerRowIdx = -1
+        for (let i = 0; i < rawJson.length; i++) {
+          const row = rawJson[i]
+          if (row.some(cell => typeof cell === 'string' && cell.toUpperCase().includes('HỌ VÀ TÊN'))) {
+            headerRowIdx = i
+            break
+          }
+        }
+        
+        if (headerRowIdx === -1) {
+          setError('Không tìm thấy cột "HỌ VÀ TÊN" trong file Excel. Vui lòng kiểm tra lại biểu mẫu.')
+          return
+        }
+        
+        const headers = rawJson[headerRowIdx] as string[]
+        const rows = rawJson.slice(headerRowIdx + 1)
+        
+        const structuredData = rows.map(row => {
+          const obj: RowData = {}
+          headers.forEach((header, index) => {
+            if (header && typeof header === 'string') {
+              obj[header.trim()] = row[index]
+            }
+          })
+          return obj
+        }).filter(row => {
+          const nameKey = Object.keys(row).find(k => k.toUpperCase().includes('HỌ VÀ TÊN') || k.toUpperCase().includes('HỌ TÊN'))
+          return nameKey && row[nameKey] && String(row[nameKey]).trim().length > 0
+        })
+        
+        setParsedData(structuredData)
+      } catch (err) {
+        setError('Có lỗi xảy ra khi đọc file Excel. Vui lòng đảm bảo file không bị hỏng.')
+        console.error(err)
+      }
+    }
+    reader.readAsBinaryString(file)
+  }
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="month" className="text-slate-700 font-semibold">Tháng <span className="text-red-500">*</span></Label>
-                <Select name="month" defaultValue={currentMonth.toString()}>
-                  <SelectTrigger className="bg-slate-50 border-slate-200">
-                    <SelectValue placeholder="Chọn tháng" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[...Array(12)].map((_, i) => (
-                      <SelectItem key={i+1} value={(i+1).toString()}>Tháng {i+1}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="year" className="text-slate-700 font-semibold">Năm <span className="text-red-500">*</span></Label>
-                <Input 
-                  id="year" 
-                  name="year" 
-                  type="number"
-                  defaultValue={currentYear}
-                  required
-                  className="bg-slate-50 border-slate-200 focus-visible:ring-blue-500"
-                />
-              </div>
-            </div>
+  const handleUpload = async () => {
+    if (parsedData.length === 0) {
+      setError('File không có dữ liệu hợp lệ.')
+      return
+    }
 
-            <div className="space-y-2">
-              <Label htmlFor="total_salary" className="text-slate-700 font-semibold">Tổng lương (VNĐ) <span className="text-red-500">*</span></Label>
-              <Input 
-                id="total_salary" 
-                name="total_salary" 
-                type="number"
-                placeholder="VD: 15000000"
-                required
-                className="bg-slate-50 border-slate-200 focus-visible:ring-blue-500 font-mono text-lg"
-              />
-              <p className="text-xs text-slate-500 italic">Đã gộp chung lương kỳ 1, kỳ 2 và các khoản khác.</p>
-            </div>
+    setIsUploading(true)
+    setError(null)
 
-            <div className="border-t border-slate-100 pt-6">
-              <Label className="text-slate-700 font-semibold mb-3 block">File Excel chi tiết đính kèm</Label>
-              <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer">
-                <Upload className="h-8 w-8 text-slate-400 mx-auto mb-2" />
-                <p className="text-sm text-slate-600">Kéo thả file Excel vào đây hoặc click để chọn file</p>
-                <p className="text-xs text-slate-400 mt-1">.xlsx, .xls (Tối đa 5MB)</p>
-                {/* Mock file upload for demo */}
-                <input type="checkbox" id="has_file" name="has_file" className="mt-4" /> 
-                <label htmlFor="has_file" className="text-sm ml-2 text-slate-600">Đính kèm file mẫu (Demo)</label>
-              </div>
-            </div>
+    try {
+      const nameKey = Object.keys(parsedData[0]).find(k => k.toUpperCase().includes('HỌ VÀ TÊN') || k.toUpperCase().includes('HỌ TÊN')) || 'HỌ VÀ TÊN'
+      const totalKey = Object.keys(parsedData[0]).find(k => k.toUpperCase().includes('THỰC LÃNH') || k.toUpperCase().includes('QUA THẺ ATM') || k.toUpperCase().includes('LƯƠNG TRẢ QUA THẺ ATM')) || 'Lương trả qua thẻ ATM (VNĐ)'
+      
+      const result = await uploadBulkPayslips({
+        month: parseInt(selectedMonth),
+        year: parseInt(selectedYear),
+        data: parsedData,
+        nameField: nameKey,
+        totalField: totalKey
+      })
 
-            <div className="pt-6 flex justify-end gap-3 border-t border-slate-100">
-              <Button type="button" variant="outline" asChild className="border-slate-300 text-slate-700">
-                <Link href="/bang-luong">Hủy bỏ</Link>
-              </Button>
-              <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 px-8">
-                Tạo và Gửi Phiếu lương
-              </Button>
-            </div>
-          </form>
+      if (result.success) {
+        setSuccess(true)
+        setTimeout(() => {
+          router.push('/bang-luong')
+          router.refresh()
+        }, 2000)
+      } else {
+        setError(result.error || 'Có lỗi xảy ra trong quá trình cập nhật cơ sở dữ liệu.')
+      }
+    } catch (err) {
+      console.error(err)
+      setError('Lỗi hệ thống khi tải lên dữ liệu.')
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  return (
+    <div className="max-w-3xl mx-auto space-y-6">
+      <div>
+        <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
+          <span>LKWA</span>
+          <span>→</span>
+          <span>Tra cứu lương</span>
+          <span>→</span>
+          <span>Tải lên</span>
         </div>
+        <h1 className="text-2xl font-bold text-[#1a56db]">Tải lên bảng lương</h1>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Nhập liệu tự động bằng Excel</CardTitle>
+          <CardDescription>
+            Hệ thống sẽ tự động trích xuất thông tin từng khoản lương dựa trên cột "Họ và tên" của nhân viên và tạo phiếu lương cho từng người.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Tháng</Label>
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Chọn tháng" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                    <SelectItem key={m} value={m.toString()}>Tháng {m}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Năm</Label>
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Chọn năm" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={currentYear.toString()}>{currentYear}</SelectItem>
+                  <SelectItem value={(currentYear - 1).toString()}>{currentYear - 1}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div
+            className={`border-2 border-dashed rounded-xl p-10 text-center transition-colors ${
+              isDragging ? 'border-[#1a56db] bg-blue-50' : 'border-slate-300 hover:border-[#1a56db]'
+            } ${file ? 'bg-slate-50' : ''}`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            {file ? (
+              <div className="flex flex-col items-center">
+                <FileSpreadsheet className="h-12 w-12 text-[#1a56db] mb-4" />
+                <p className="font-medium text-slate-800">{file.name}</p>
+                <p className="text-sm text-slate-500 mt-1">Đã tìm thấy {parsedData.length} dòng dữ liệu nhân viên</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-4"
+                  onClick={() => {
+                    setFile(null)
+                    setParsedData([])
+                  }}
+                  disabled={isUploading}
+                >
+                  Chọn file khác
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center">
+                <Upload className="h-12 w-12 text-slate-400 mb-4" />
+                <h3 className="font-medium text-slate-800 text-lg mb-1">Kéo thả file Excel vào đây</h3>
+                <p className="text-sm text-slate-500 mb-6">hoặc click để chọn file từ máy tính</p>
+                <input
+                  type="file"
+                  id="excel-upload"
+                  className="hidden"
+                  accept=".xlsx, .xls"
+                  onChange={handleFileChange}
+                />
+                <Button asChild variant="secondary" className="bg-slate-200 hover:bg-slate-300 text-slate-800">
+                  <label htmlFor="excel-upload" className="cursor-pointer">
+                    Duyệt tìm file
+                  </label>
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {error && (
+            <Alert variant="destructive" className="bg-red-50 border-red-200 text-red-800">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Lỗi</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          {success && (
+            <Alert className="bg-emerald-50 border-emerald-200 text-emerald-800">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+              <AlertTitle>Thành công</AlertTitle>
+              <AlertDescription>Đã tạo phiếu lương và gửi thông báo cho {parsedData.length} nhân viên. Đang chuyển hướng...</AlertDescription>
+            </Alert>
+          )}
+        </CardContent>
+        <CardFooter className="bg-slate-50 border-t flex justify-end p-4">
+          <Button 
+            variant="outline" 
+            className="mr-3" 
+            onClick={() => router.back()}
+            disabled={isUploading}
+          >
+            Hủy bỏ
+          </Button>
+          <Button 
+            className="bg-[#1a56db] hover:bg-blue-700" 
+            disabled={!file || parsedData.length === 0 || isUploading}
+            onClick={handleUpload}
+          >
+            {isUploading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            Xác nhận tạo Phiếu lương
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
   )
 }

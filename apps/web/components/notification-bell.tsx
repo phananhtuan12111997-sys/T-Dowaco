@@ -152,6 +152,15 @@ export function NotificationBell() {
       return
     }
 
+    if (notif.message.includes('phiếu lương')) {
+      if (notif.document_id) {
+        router.push(`/bang-luong/${notif.document_id}`)
+      } else {
+        router.push(`/bang-luong`)
+      }
+      return
+    }
+
     if (!notif.document_id) {
       // Do nothing for system messages like deleted document
       return

@@ -50,6 +50,18 @@ export default async function PayslipsPage({
   const resolvedSearchParams = await searchParams
   const selectedYear = resolvedSearchParams?.year ? parseInt(resolvedSearchParams.year) : currentYear
   
+  // Lấy thông tin user hiện tại để kiểm tra quyền
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('department, is_admin')
+    .eq('id', user?.id)
+    .single()
+
+  const isHR = profile?.department?.toLowerCase().includes('tổ chức') || profile?.department?.toLowerCase().includes('kế hoạch')
+  const isAccountant = profile?.department?.toLowerCase().includes('kế toán')
+  const isAdmin = profile?.is_admin === true
+  const canUpload = isAdmin || isHR || isAccountant
+
   // Truy vấn dữ liệu phiếu lương của user theo năm
   const { data: payslips } = await supabase
     .from('payslips')
@@ -70,12 +82,13 @@ export default async function PayslipsPage({
           <h1 className="text-2xl font-bold text-[#1a56db]">Phiếu lương cá nhân</h1>
         </div>
         
-        {/* Nút này chỉ nên hiện cho Kế Toán, nhưng tạm thời cứ để để test */}
-        <Button asChild variant="outline" className="bg-white border-blue-200 text-blue-600 hover:bg-blue-50">
-          <Link href="/bang-luong/create">
-            <Plus className="mr-2 h-4 w-4" /> Kế toán: Nhập phiếu lương
-          </Link>
-        </Button>
+        {canUpload && (
+          <Button asChild variant="outline" className="bg-white border-blue-200 text-blue-600 hover:bg-blue-50">
+            <Link href="/bang-luong/create">
+              <Plus className="mr-2 h-4 w-4" /> Tải lên bảng lương (Excel)
+            </Link>
+          </Button>
+        )}
       </div>
 
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
