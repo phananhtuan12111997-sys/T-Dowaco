@@ -56,15 +56,10 @@ export async function createPayslip(formData: FormData) {
 export async function markAsRead(payslipId: string) {
   const supabase = await createClient()
   
-  const { error } = await supabase
-    .from('payslips')
-    .update({ status: 'Đã xem' })
-    .eq('id', payslipId)
+  // Cột status không tồn tại, ta chỉ redirect
+  // Thực tế có thể update is_paid nếu muốn, nhưng ở đây chỉ cần redirect
+  // Bỏ qua update để không lỗi schema
     
-  if (error) {
-    console.error('Lỗi khi cập nhật trạng thái:', error)
-  }
-  
   redirect(`/bang-luong/${payslipId}`)
 }
 
@@ -147,10 +142,8 @@ export async function uploadBulkPayslips(payload: {
           user_id: matchedUserId,
           month: payload.month,
           year: payload.year,
-          title: `Phiếu lương tháng ${payload.month}/${payload.year}`,
           total_salary: totalSalary,
-          details: row, // Toàn bộ dữ liệu của row đó
-          status: 'Chưa xem'
+          details: row // Toàn bộ dữ liệu của row đó
         })
       }
     }
