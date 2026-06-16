@@ -131,7 +131,7 @@ export default async function PayslipsPage({
                       Tháng {slip.month}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-slate-800 font-medium">{slip.title}</div>
+                      <div className="text-slate-800 font-medium">{`Phiếu lương tháng ${slip.month}/${slip.year}`}</div>
                       <div className="text-xs text-slate-400 mt-1">Cập nhật: {new Date(slip.created_at).toLocaleDateString('vi-VN')}</div>
                     </td>
                     <td className="px-6 py-4 text-right">

@@ -74,7 +74,7 @@ export default async function PayslipDetailPage({ params }: { params: { id: stri
             </Link>
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-[#1a56db]">{payslip.title}</h1>
+            <h1 className="text-2xl font-bold text-[#1a56db]">{`Phiếu lương tháng ${payslip.month}/${payslip.year}`}</h1>
             <p className="text-sm text-slate-500">Cập nhật lúc: {new Date(payslip.created_at).toLocaleString('vi-VN')}</p>
           </div>
         </div>
