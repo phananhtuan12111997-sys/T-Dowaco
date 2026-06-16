@@ -18,14 +18,7 @@ export default async function PayslipDetailPage({ params }: { params: { id: stri
   // Lấy chi tiết phiếu lương
   const { data: payslip } = await supabase
     .from('payslips')
-    .select(`
-      *,
-      profiles!payslips_user_id_fkey (
-        full_name,
-        department,
-        position
-      )
-    `)
+    .select('*')
     .eq('id', resolvedParams.id)
     .single()
 
@@ -51,8 +44,10 @@ export default async function PayslipDetailPage({ params }: { params: { id: stri
     }
   }
 
+  const { data: profileData } = await supabase.from('profiles').select('full_name, department, position').eq('id', payslip.user_id).single()
+
   const details = payslip.details || {}
-  const profile = payslip.profiles || {}
+  const profile = profileData || {}
 
   const formatMoney = (val: any) => {
     if (typeof val === 'number') return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val)
@@ -62,6 +57,19 @@ export default async function PayslipDetailPage({ params }: { params: { id: stri
       return val
     }
     return val
+  }
+
+  let netSalary = payslip.net_salary || 0
+  if (netSalary === 0 && details) {
+    const totalKey = Object.keys(details).find(k => k.toUpperCase().includes('THỰC LÃNH') || k.toUpperCase().includes('QUA THẺ ATM') || k.toUpperCase().includes('LƯƠNG TRẢ QUA THẺ ATM'))
+    if (totalKey && details[totalKey]) {
+      const val = details[totalKey]
+      if (typeof val === 'number') netSalary = val
+      else if (typeof val === 'string') {
+        const num = parseFloat(val.replace(/[^0-9.-]+/g,""))
+        if (!isNaN(num)) netSalary = num
+      }
+    }
   }
 
   return (
@@ -107,7 +115,7 @@ export default async function PayslipDetailPage({ params }: { params: { id: stri
               <p className="text-emerald-600/80 text-sm">Tổng số tiền được nhận qua thẻ ATM</p>
             </div>
             <div className="text-3xl font-bold text-emerald-600">
-              {formatMoney(payslip.total_salary)}
+              {formatMoney(netSalary)}
             </div>
           </div>
 

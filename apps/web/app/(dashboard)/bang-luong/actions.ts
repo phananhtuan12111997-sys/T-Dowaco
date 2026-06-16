@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/utils/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
@@ -31,7 +32,13 @@ export async function createPayslip(formData: FormData) {
   }
 
   // Ghi vào CSDL
-  const { error } = await supabase
+  // Tạo admin client để bypass RLS
+  const supabaseAdmin = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  const { error } = await supabaseAdmin
     .from('payslips')
     .insert({
       month: parseInt(monthStr),
@@ -149,9 +156,15 @@ export async function uploadBulkPayslips(payload: {
       return { success: false, error: 'Không tìm thấy nhân viên nào khớp với file Excel.' }
     }
 
+    // Tạo admin client để vượt quyền RLS khi upload hàng loạt
+    const supabaseAdmin = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
     // 3. Xoá các phiếu lương cũ của tháng/năm này nếu upload đè (Tuỳ chọn: ở đây ta cho phép xoá cũ tạo mới)
     const matchedUserIds = payslipsToInsert.map(p => p.user_id)
-    await supabase
+    await supabaseAdmin
       .from('payslips')
       .delete()
       .in('user_id', matchedUserIds)
@@ -159,7 +172,7 @@ export async function uploadBulkPayslips(payload: {
       .eq('year', payload.year)
 
     // 4. Insert Payslips
-    const { data: insertedPayslips, error: insertError } = await supabase
+    const { data: insertedPayslips, error: insertError } = await supabaseAdmin
       .from('payslips')
       .insert(payslipsToInsert)
       .select('id, user_id, month, year')
@@ -177,7 +190,7 @@ export async function uploadBulkPayslips(payload: {
         })
       })
 
-      const { error: notifError } = await supabase
+      const { error: notifError } = await supabaseAdmin
         .from('notifications')
         .insert(notificationsToInsert)
         

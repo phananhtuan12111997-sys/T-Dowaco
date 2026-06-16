@@ -62,13 +62,36 @@ export default async function PayslipsPage({
   const isAdmin = profile?.is_admin === true
   const canUpload = isAdmin || isHR || isAccountant
 
-  // Truy vấn dữ liệu phiếu lương của user theo năm
-  const { data: payslips } = await supabase
+  // Truy vấn dữ liệu phiếu lương của user theo năm (không dùng join qua foreign key vì DB đang thiếu constraint)
+  let query = supabase
     .from('payslips')
     .select('*')
-    .eq('user_id', user?.id)
     .eq('year', selectedYear)
     .order('month', { ascending: false })
+    
+  if (!canUpload) {
+    query = query.eq('user_id', user?.id)
+  }
+
+  const { data: payslipsData } = await query
+  
+  // Gán thông tin profile thủ công
+  let payslips = payslipsData || []
+  if (payslips.length > 0) {
+    const userIds = [...new Set(payslips.map(p => p.user_id))]
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, full_name')
+      .in('id', userIds)
+      
+    if (profiles) {
+      const profileMap = new Map(profiles.map(p => [p.id, p]))
+      payslips = payslips.map(slip => ({
+        ...slip,
+        profiles: profileMap.get(slip.user_id)
+      }))
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -79,7 +102,9 @@ export default async function PayslipsPage({
             <span>→</span>
             <span>Tra cứu lương</span>
           </div>
-          <h1 className="text-2xl font-bold text-[#1a56db]">Phiếu lương cá nhân</h1>
+          <h1 className="text-2xl font-bold text-[#1a56db]">
+            {canUpload ? 'Quản lý phiếu lương toàn công ty' : 'Phiếu lương cá nhân'}
+          </h1>
         </div>
         
         {canUpload && (
@@ -117,7 +142,7 @@ export default async function PayslipsPage({
               <tr>
                 <th className="px-6 py-4 font-medium">THÁNG</th>
                 <th className="px-6 py-4 font-medium">TIÊU ĐỀ</th>
-                <th className="px-6 py-4 font-medium text-right">TỔNG LƯƠNG</th>
+                <th className="px-6 py-4 font-medium text-right">TỔNG LƯƠNG (THỰC NHẬN)</th>
                 <th className="px-6 py-4 font-medium text-center">FILE ĐÍNH KÈM</th>
                 <th className="px-6 py-4 font-medium text-center">TRẠNG THÁI</th>
                 <th className="px-6 py-4 font-medium text-center">THAO TÁC</th>
@@ -125,18 +150,35 @@ export default async function PayslipsPage({
             </thead>
             <tbody>
               {payslips && payslips.length > 0 ? (
-                payslips.map((slip) => (
+                payslips.map((slip: any) => {
+                  let netSalary = slip.net_salary || 0
+                  if (netSalary === 0 && slip.details) {
+                    const totalKey = Object.keys(slip.details).find(k => k.toUpperCase().includes('THỰC LÃNH') || k.toUpperCase().includes('QUA THẺ ATM') || k.toUpperCase().includes('LƯƠNG TRẢ QUA THẺ ATM'))
+                    if (totalKey && slip.details[totalKey]) {
+                      const val = slip.details[totalKey]
+                      if (typeof val === 'number') netSalary = val
+                      else if (typeof val === 'string') {
+                        const num = parseFloat(val.replace(/[^0-9.-]+/g,""))
+                        if (!isNaN(num)) netSalary = num
+                      }
+                    }
+                  }
+                  
+                  return (
                   <tr key={slip.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4 font-medium text-slate-900">
                       Tháng {slip.month}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-slate-800 font-medium">{`Phiếu lương tháng ${slip.month}/${slip.year}`}</div>
+                      <div className="text-slate-800 font-medium">
+                        {`Phiếu lương tháng ${slip.month}/${slip.year}`}
+                        {canUpload && slip.profiles?.full_name ? ` - ${slip.profiles.full_name}` : ''}
+                      </div>
                       <div className="text-xs text-slate-400 mt-1">Cập nhật: {new Date(slip.created_at).toLocaleDateString('vi-VN')}</div>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <span className="font-bold text-emerald-600">
-                        {formatCurrency(slip.total_salary)}
+                        {formatCurrency(netSalary)}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
@@ -155,7 +197,7 @@ export default async function PayslipsPage({
                       <ViewButton id={slip.id} />
                     </td>
                   </tr>
-                ))
+                )})
               ) : (
                 <tr>
                   <td colSpan={6} className="px-6 py-16 text-center">
