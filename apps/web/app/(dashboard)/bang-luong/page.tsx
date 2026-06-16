@@ -1,4 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { Plus, Download, FileSpreadsheet, Info, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -62,8 +63,13 @@ export default async function PayslipsPage({
   const isAdmin = profile?.is_admin === true
   const canUpload = isAdmin || isHR || isAccountant
 
+  const supabaseAdmin = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
   // Truy vấn dữ liệu phiếu lương của user theo năm (không dùng join qua foreign key vì DB đang thiếu constraint)
-  let query = supabase
+  let query = supabaseAdmin
     .from('payslips')
     .select('*')
     .eq('year', selectedYear)

@@ -1,4 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import { ArrowLeft, Download, FileSpreadsheet, Printer } from 'lucide-react'
 import Link from 'next/link'
@@ -15,8 +16,13 @@ export default async function PayslipDetailPage({ params }: { params: { id: stri
     redirect('/login')
   }
 
+  const supabaseAdmin = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
   // Lấy chi tiết phiếu lương
-  const { data: payslip } = await supabase
+  const { data: payslip } = await supabaseAdmin
     .from('payslips')
     .select('*')
     .eq('id', resolvedParams.id)
