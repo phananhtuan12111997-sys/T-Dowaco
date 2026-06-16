@@ -40,8 +40,7 @@ export async function createPayslip(formData: FormData) {
       total_salary: parseFloat(total_salary_str),
       attachment_url,
       user_id: user_id || user.id, // Mặc định tự gửi cho mình để dễ test
-      status: 'Chưa xem',
-      created_by: user.id
+      status: 'Chưa xem'
     })
 
   if (error) {
@@ -151,8 +150,7 @@ export async function uploadBulkPayslips(payload: {
           title: `Phiếu lương tháng ${payload.month}/${payload.year}`,
           total_salary: totalSalary,
           details: row, // Toàn bộ dữ liệu của row đó
-          status: 'Chưa xem',
-          created_by: user.id
+          status: 'Chưa xem'
         })
       }
     }
