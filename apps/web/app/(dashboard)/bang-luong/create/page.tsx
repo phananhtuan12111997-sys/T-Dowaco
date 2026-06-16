@@ -65,8 +65,18 @@ export default function BulkUploadPayslips() {
       try {
         const data = e.target?.result
         const workbook = XLSX.read(data, { type: 'binary' })
-        const sheetName = workbook.SheetNames[0]
-        const sheet = workbook.Sheets[sheetName]
+        // Find sheet containing "bang luong" or "bảng lương"
+        const normalizeString = (str: string) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
+        
+        let targetSheetName = workbook.SheetNames[0] // fallback
+        for (const name of workbook.SheetNames) {
+          if (normalizeString(name).includes('bang luong')) {
+            targetSheetName = name
+            break
+          }
+        }
+        
+        const sheet = workbook.Sheets[targetSheetName]
         
         // Convert to JSON, starting from the row containing headers.
         const rawJson: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 })
