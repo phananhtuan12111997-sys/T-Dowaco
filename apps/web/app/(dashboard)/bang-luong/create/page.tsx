@@ -132,7 +132,10 @@ export default function BulkUploadPayslips() {
 
     try {
       const nameKey = Object.keys(parsedData[0]).find(k => k.toUpperCase().includes('HỌ VÀ TÊN') || k.toUpperCase().includes('HỌ TÊN')) || 'HỌ VÀ TÊN'
-      const totalKey = Object.keys(parsedData[0]).find(k => k.toUpperCase().includes('THỰC LÃNH') || k.toUpperCase().includes('QUA THẺ ATM') || k.toUpperCase().includes('LƯƠNG TRẢ QUA THẺ ATM')) || 'Lương trả qua thẻ ATM (VNĐ)'
+      const totalKey = Object.keys(parsedData[0]).find(k => {
+        const clean = k.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "").toUpperCase();
+        return clean.includes('THUCLANH') || clean.includes('QUATHEATM');
+      }) || 'Lương trả qua thẻ ATM (VNĐ)'
       
       const result = await uploadBulkPayslips({
         month: parseInt(selectedMonth),

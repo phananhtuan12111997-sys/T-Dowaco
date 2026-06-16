@@ -50,7 +50,7 @@ export default async function PayslipDetailPage({ params }: { params: { id: stri
     }
   }
 
-  const { data: profileData } = await supabase.from('profiles').select('full_name, department, position').eq('id', payslip.user_id).single()
+  const { data: profileData } = await supabaseAdmin.from('profiles').select('full_name, department, role').eq('id', payslip.user_id).single()
 
   const details = payslip.details || {}
   const profile = profileData || {}
@@ -67,7 +67,10 @@ export default async function PayslipDetailPage({ params }: { params: { id: stri
 
   let netSalary = payslip.net_salary || 0
   if (netSalary === 0 && details) {
-    const totalKey = Object.keys(details).find(k => k.toUpperCase().includes('THỰC LÃNH') || k.toUpperCase().includes('QUA THẺ ATM') || k.toUpperCase().includes('LƯƠNG TRẢ QUA THẺ ATM'))
+    const totalKey = Object.keys(details).find(k => {
+      const clean = k.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "").toUpperCase();
+      return clean.includes('THUCLANH') || clean.includes('QUATHEATM');
+    })
     if (totalKey && details[totalKey]) {
       const val = details[totalKey]
       if (typeof val === 'number') netSalary = val
@@ -110,7 +113,7 @@ export default async function PayslipDetailPage({ params }: { params: { id: stri
             </div>
             <div className="text-right text-sm space-y-1">
               <p><span className="text-slate-500 mr-2">Phòng ban:</span> <span className="font-semibold">{profile.department || 'Chưa cập nhật'}</span></p>
-              <p><span className="text-slate-500 mr-2">Chức vụ:</span> <span className="font-semibold">{profile.position || 'Chưa cập nhật'}</span></p>
+              <p><span className="text-slate-500 mr-2">Chức vụ:</span> <span className="font-semibold">{profile.role || 'Chưa cập nhật'}</span></p>
             </div>
           </div>
         </CardHeader>

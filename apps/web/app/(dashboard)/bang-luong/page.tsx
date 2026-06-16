@@ -159,7 +159,10 @@ export default async function PayslipsPage({
                 payslips.map((slip: any) => {
                   let netSalary = slip.net_salary || 0
                   if (netSalary === 0 && slip.details) {
-                    const totalKey = Object.keys(slip.details).find(k => k.toUpperCase().includes('THỰC LÃNH') || k.toUpperCase().includes('QUA THẺ ATM') || k.toUpperCase().includes('LƯƠNG TRẢ QUA THẺ ATM'))
+                    const totalKey = Object.keys(slip.details).find(k => {
+                      const clean = k.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "").toUpperCase();
+                      return clean.includes('THUCLANH') || clean.includes('QUATHEATM');
+                    })
                     if (totalKey && slip.details[totalKey]) {
                       const val = slip.details[totalKey]
                       if (typeof val === 'number') netSalary = val
