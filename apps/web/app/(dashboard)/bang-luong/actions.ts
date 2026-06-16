@@ -34,13 +34,10 @@ export async function createPayslip(formData: FormData) {
   const { error } = await supabase
     .from('payslips')
     .insert({
-      title,
       month: parseInt(monthStr),
       year: parseInt(yearStr),
-      total_salary: parseFloat(total_salary_str),
-      attachment_url,
-      user_id: user_id || user.id, // Mặc định tự gửi cho mình để dễ test
-      status: 'Chưa xem'
+      net_salary: parseFloat(total_salary_str),
+      user_id: user_id || user.id // Mặc định tự gửi cho mình để dễ test
     })
 
   if (error) {
@@ -142,7 +139,7 @@ export async function uploadBulkPayslips(payload: {
           user_id: matchedUserId,
           month: payload.month,
           year: payload.year,
-          total_salary: totalSalary,
+          net_salary: totalSalary,
           details: row // Toàn bộ dữ liệu của row đó
         })
       }
