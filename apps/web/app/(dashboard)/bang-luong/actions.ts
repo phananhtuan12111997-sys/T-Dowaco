@@ -59,11 +59,25 @@ export async function createPayslip(formData: FormData) {
 
 export async function markAsRead(payslipId: string) {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
   
-  // Cột status không tồn tại, ta chỉ redirect
-  // Thực tế có thể update is_paid nếu muốn, nhưng ở đây chỉ cần redirect
-  // Bỏ qua update để không lỗi schema
+  if (!user) {
+    redirect('/login')
+  }
+
+  const supabaseAdmin = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+  
+  // Đánh dấu đã xem bằng cách update notification (chỉ update cho chính user đó)
+  await supabaseAdmin
+    .from('notifications')
+    .update({ is_read: true })
+    .eq('document_id', payslipId)
+    .eq('user_id', user.id)
     
+  revalidatePath('/bang-luong')
   redirect(`/bang-luong/${payslipId}`)
 }
 
@@ -84,15 +98,20 @@ export async function uploadBulkPayslips(payload: {
   // Lấy thông tin user hiện tại để kiểm tra quyền
   const { data: profile } = await supabase
     .from('profiles')
-    .select('department, is_admin')
+    .select('department, is_admin, full_name, role')
     .eq('id', user.id)
     .single()
 
-  const isHR = profile?.department?.toLowerCase().includes('tổ chức') || profile?.department?.toLowerCase().includes('kế hoạch')
-  const isAccountant = profile?.department?.toLowerCase().includes('kế toán')
+  const fullName = profile?.full_name?.toLowerCase() || ''
+  const roleName = profile?.role?.toLowerCase() || ''
+  const departmentName = profile?.department?.toLowerCase() || ''
+
+  const isChau = fullName.includes('nguyễn thị hồng châu') || fullName.includes('nguyễn thi hồng châu')
+  const isTuyet = fullName.includes('lê thị kim tuyết')
+  const isChiefAccountant = roleName.includes('kế toán trưởng') || (departmentName.includes('kế toán') && roleName.includes('trưởng'))
   const isAdmin = profile?.is_admin === true
   
-  if (!isAdmin && !isHR && !isAccountant) {
+  if (!isAdmin && !isChau && !isTuyet && !isChiefAccountant) {
     return { success: false, error: 'Bạn không có quyền thực hiện chức năng này' }
   }
 
@@ -104,7 +123,18 @@ export async function uploadBulkPayslips(payload: {
 
     if (profilesError) throw profilesError
 
-    const normalize = (str: string) => str.toLowerCase().trim().replace(/\s+/g, ' ')
+    const removeVietnameseTones = (str: string) => {
+      return str
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/Đ/g, 'D')
+    }
+
+    const normalize = (str: string) => {
+      if (!str) return ''
+      return removeVietnameseTones(str.toLowerCase().trim().replace(/\s+/g, ' '))
+    }
     const profileMap = new Map()
     profiles?.forEach(p => {
       if (p.full_name) {
@@ -114,6 +144,7 @@ export async function uploadBulkPayslips(payload: {
 
     const payslipsToInsert: any[] = []
     const notificationsToInsert: any[] = []
+    const unmatchedNames: string[] = []
 
     // 2. Map data
     for (const row of payload.data) {
@@ -126,7 +157,7 @@ export async function uploadBulkPayslips(payload: {
       // Nếu không map được chính xác, tìm kiếm gần đúng (chứa chuỗi)
       let matchedUserId = userId
       if (!matchedUserId) {
-        const potentialMatch = profiles?.find(p => p.full_name && normalize(p.full_name).includes(normalizedName) || normalizedName.includes(normalize(p.full_name || '')))
+        const potentialMatch = profiles?.find(p => p.full_name && (normalize(p.full_name).includes(normalizedName) || normalizedName.includes(normalize(p.full_name))))
         if (potentialMatch) {
           matchedUserId = potentialMatch.id
         }
@@ -149,11 +180,13 @@ export async function uploadBulkPayslips(payload: {
           net_salary: totalSalary,
           details: row // Toàn bộ dữ liệu của row đó
         })
+      } else {
+        unmatchedNames.push(rawName)
       }
     }
 
     if (payslipsToInsert.length === 0) {
-      return { success: false, error: 'Không tìm thấy nhân viên nào khớp với file Excel.' }
+      return { success: false, error: 'Không tìm thấy nhân viên nào khớp với file Excel. Bạn có thể kiểm tra lại tên nhân viên.' }
     }
 
     // Tạo admin client để vượt quyền RLS khi upload hàng loạt
@@ -162,29 +195,28 @@ export async function uploadBulkPayslips(payload: {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    // 3. Xoá các phiếu lương cũ của tháng/năm này nếu upload đè
-    // Đầu tiên lấy danh sách payslip id cũ để xoá notifications tương ứng
-    const { data: oldPayslips } = await supabaseAdmin
+    // 3. Xóa dữ liệu cũ nếu trùng tháng/năm
+    const { data: existingPayslips } = await supabaseAdmin
       .from('payslips')
       .select('id')
       .eq('month', payload.month)
       .eq('year', payload.year)
+      .in('user_id', payslipsToInsert.map(p => p.user_id))
       
-    if (oldPayslips && oldPayslips.length > 0) {
-      const oldPayslipIds = oldPayslips.map(p => p.id)
+    if (existingPayslips && existingPayslips.length > 0) {
+      const idsToDelete = existingPayslips.map(p => p.id)
       await supabaseAdmin
         .from('notifications')
         .delete()
-        .in('document_id', oldPayslipIds)
-
+        .in('document_id', idsToDelete)
+        
       await supabaseAdmin
         .from('payslips')
         .delete()
-        .eq('month', payload.month)
-        .eq('year', payload.year)
+        .in('id', idsToDelete)
     }
 
-    // 4. Insert Payslips
+    // 4. Insert dữ liệu mới
     const { data: insertedPayslips, error: insertError } = await supabaseAdmin
       .from('payslips')
       .insert(payslipsToInsert)
@@ -211,7 +243,7 @@ export async function uploadBulkPayslips(payload: {
     }
 
     revalidatePath('/bang-luong')
-    return { success: true, count: payslipsToInsert.length }
+    return { success: true, count: payslipsToInsert.length, unmatchedNames }
   } catch (err: any) {
     console.error('Bulk upload error:', err)
     return { success: false, error: err.message || 'Lỗi không xác định' }
@@ -227,15 +259,20 @@ export async function revokeMonthPayslips(month: number, year: number) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('department, is_admin')
+    .select('department, is_admin, full_name, role')
     .eq('id', user.id)
     .single()
 
-  const isHR = profile?.department?.toLowerCase().includes('tổ chức') || profile?.department?.toLowerCase().includes('kế hoạch')
-  const isAccountant = profile?.department?.toLowerCase().includes('kế toán')
+  const fullName = profile?.full_name?.toLowerCase() || ''
+  const roleName = profile?.role?.toLowerCase() || ''
+  const departmentName = profile?.department?.toLowerCase() || ''
+
+  const isChau = fullName.includes('nguyễn thị hồng châu') || fullName.includes('nguyễn thi hồng châu')
+  const isTuyet = fullName.includes('lê thị kim tuyết')
+  const isChiefAccountant = roleName.includes('kế toán trưởng') || (departmentName.includes('kế toán') && roleName.includes('trưởng'))
   const isAdmin = profile?.is_admin === true
   
-  if (!isAdmin && !isHR && !isAccountant) {
+  if (!isAdmin && !isChau && !isTuyet && !isChiefAccountant) {
     return { success: false, error: 'Bạn không có quyền thực hiện chức năng này' }
   }
 

@@ -97,14 +97,58 @@ export default function BulkUploadPayslips() {
           return
         }
         
-        const headers = rawJson[headerRowIdx] as string[]
-        const rows = rawJson.slice(headerRowIdx + 1)
+        const topHeaders = rawJson[headerRowIdx] as any[]
+        const subHeaders = rawJson[headerRowIdx + 1] as any[]
+        
+        let hasSubHeaders = false
+        const nameColIdx = topHeaders.findIndex((c: any) => typeof c === 'string' && (c.toUpperCase().includes('HỌ VÀ TÊN') || c.toUpperCase().includes('HỌ TÊN')))
+        if (nameColIdx !== -1) {
+            const nameSubCell = subHeaders ? subHeaders[nameColIdx] : null
+            // Nếu ô dưới HỌ VÀ TÊN trống, chứng tỏ nó bị merge dọc -> có dòng sub header
+            if (!nameSubCell || String(nameSubCell).trim() === '') {
+                hasSubHeaders = true
+            }
+        } else {
+            hasSubHeaders = !!subHeaders // Fallback
+        }
+
+        const headers: string[] = []
+        let currentTop = ""
+        
+        const maxCols = Math.max(topHeaders.length, hasSubHeaders && subHeaders ? subHeaders.length : 0)
+        for(let i = 0; i < maxCols; i++) {
+           let top = topHeaders[i]
+           let sub = hasSubHeaders && subHeaders ? subHeaders[i] : null
+           
+           if (top && String(top).trim() !== '') {
+               currentTop = String(top).trim().replace(/\n/g, ' ').replace(/\r/g, '')
+           } else if (!sub || String(sub).trim() === '') {
+               currentTop = "" 
+           }
+           
+           let finalHeader = currentTop
+           
+           if (sub && String(sub).trim() !== '') {
+               const subStr = String(sub).trim().replace(/\n/g, ' ').replace(/\r/g, '')
+               if (currentTop && !currentTop.toUpperCase().includes('STT') && !currentTop.toUpperCase().includes('HỌ VÀ TÊN') && !currentTop.toUpperCase().includes('HỌ TÊN')) {
+                   finalHeader = `${currentTop} - ${subStr}`
+               } else {
+                   finalHeader = subStr
+               }
+           }
+           
+           headers.push(finalHeader)
+        }
+        
+        const dataStartIndex = hasSubHeaders ? headerRowIdx + 2 : headerRowIdx + 1
+        const rows = rawJson.slice(dataStartIndex)
         
         const structuredData = rows.map(row => {
           const obj: RowData = {}
           headers.forEach((header, index) => {
-            if (header && typeof header === 'string') {
-              obj[header.trim()] = row[index]
+            if (header && typeof header === 'string' && header !== '') {
+              const val = row[index]
+              obj[header] = (val !== undefined && val !== null && val !== '') ? val : 0
             }
           })
           return obj
@@ -148,11 +192,16 @@ export default function BulkUploadPayslips() {
       })
 
       if (result.success) {
-        setSuccess(true)
+        if (result.unmatchedNames && result.unmatchedNames.length > 0) {
+          setError(`Đã cập nhật ${result.count} nhân viên. Các nhân viên sau không khớp tên trong hệ thống: ${result.unmatchedNames.join(', ')}`)
+          setSuccess(true) // Vẫn báo success một phần
+        } else {
+          setSuccess(true)
+        }
         setTimeout(() => {
           router.push('/bang-luong')
           router.refresh()
-        }, 2000)
+        }, 3000) // Tăng thời gian chờ lên để người dùng kịp đọc lỗi nếu có
       } else {
         setError(result.error || 'Có lỗi xảy ra trong quá trình cập nhật cơ sở dữ liệu.')
       }

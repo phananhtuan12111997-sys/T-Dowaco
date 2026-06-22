@@ -8,6 +8,7 @@ import { getNotifications, getUnreadCount, markAsRead, markAllAsRead } from '@/a
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
@@ -121,9 +122,12 @@ export function NotificationBell() {
     setUnreadCount(0)
   }
 
-  const handleNotificationClick = async (notif: Notification) => {
+  const handleNotificationClick = (notif: Notification) => {
     if (!notif.is_read) {
-      await markAsRead(notif.id)
+      // Gọi API ngầm, không await để tránh block chuyển trang
+      markAsRead(notif.id).catch(console.error)
+      
+      // Cập nhật state cục bộ ngay lập tức
       setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n))
       setUnreadCount(prev => Math.max(0, prev - 1))
     }
@@ -235,10 +239,10 @@ export function NotificationBell() {
                     <h4 className="text-sm font-bold text-slate-800">Hôm nay</h4>
                   </div>
                   {todayNotifs.map(n => (
-                    <div 
+                    <DropdownMenuItem 
                       key={n.id} 
-                      onClick={() => handleNotificationClick(n)}
-                      className={`px-4 py-3 hover:bg-slate-50 cursor-pointer flex gap-3 transition-colors ${!n.is_read ? 'bg-blue-50/30' : ''}`}
+                      onSelect={(e) => { e.preventDefault(); handleNotificationClick(n); }}
+                      className={`px-4 py-3 cursor-pointer flex gap-3 transition-colors rounded-none focus:bg-slate-50 ${!n.is_read ? 'bg-blue-50/30' : ''}`}
                     >
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${getNotificationStyle(n.message).bgClass}`}>
                         {getNotificationStyle(n.message).icon}
@@ -254,7 +258,7 @@ export function NotificationBell() {
                       {!n.is_read && (
                         <div className="w-2 h-2 rounded-full bg-[#1a56db] self-center flex-shrink-0"></div>
                       )}
-                    </div>
+                    </DropdownMenuItem>
                   ))}
                 </>
               )}
@@ -265,10 +269,10 @@ export function NotificationBell() {
                     <h4 className="text-sm font-bold text-slate-800">Trước đó</h4>
                   </div>
                   {earlierNotifs.map(n => (
-                    <div 
+                    <DropdownMenuItem 
                       key={n.id} 
-                      onClick={() => handleNotificationClick(n)}
-                      className={`px-4 py-3 hover:bg-slate-50 cursor-pointer flex gap-3 transition-colors ${!n.is_read ? 'bg-blue-50/30' : ''}`}
+                      onSelect={(e) => { e.preventDefault(); handleNotificationClick(n); }}
+                      className={`px-4 py-3 cursor-pointer flex gap-3 transition-colors rounded-none focus:bg-slate-50 ${!n.is_read ? 'bg-blue-50/30' : ''}`}
                     >
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${getNotificationStyle(n.message).bgClass}`}>
                         {getNotificationStyle(n.message).icon}
@@ -284,7 +288,7 @@ export function NotificationBell() {
                       {!n.is_read && (
                         <div className="w-2 h-2 rounded-full bg-[#1a56db] self-center flex-shrink-0"></div>
                       )}
-                    </div>
+                    </DropdownMenuItem>
                   ))}
                 </>
               )}

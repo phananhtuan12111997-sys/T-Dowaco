@@ -1,7 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
-import { ArrowLeft, Download, FileSpreadsheet, Printer } from 'lucide-react'
+import { ArrowLeft, Download, FileSpreadsheet } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -42,15 +42,24 @@ export default async function PayslipDetailPage({ params }: { params: { id: stri
 
   // Đảm bảo chỉ người dùng đó hoặc admin/kế toán mới được xem (nếu cần thêm điều kiện)
   if (payslip.user_id !== user.id) {
-    const { data: profile } = await supabase.from('profiles').select('is_admin, department').eq('id', user.id).single()
-    const isHR = profile?.department?.toLowerCase().includes('tổ chức') || profile?.department?.toLowerCase().includes('kế hoạch')
-    const isAccountant = profile?.department?.toLowerCase().includes('kế toán')
-    if (!profile?.is_admin && !isHR && !isAccountant) {
+    const { data: profile } = await supabase.from('profiles').select('is_admin, department, full_name, role').eq('id', user.id).single()
+    const fullName = profile?.full_name?.toLowerCase() || ''
+    const roleName = profile?.role?.toLowerCase() || ''
+    const departmentName = profile?.department?.toLowerCase() || ''
+
+    const isChau = fullName.includes('nguyễn thị hồng châu') || fullName.includes('nguyễn thi hồng châu')
+    const isTuyet = fullName.includes('lê thị kim tuyết')
+    const isChiefAccountant = roleName.includes('kế toán trưởng') || (departmentName.includes('kế toán') && roleName.includes('trưởng'))
+    const isAdmin = profile?.is_admin === true
+
+    if (!isAdmin && !isChau && !isTuyet && !isChiefAccountant) {
       redirect('/bang-luong')
     }
   }
-
   const { data: profileData } = await supabaseAdmin.from('profiles').select('full_name, department, role').eq('id', payslip.user_id).single()
+
+  // Không update is_read ở đây để tránh lỗi prefetch của Next.js
+  // is_read đã được update thông qua Server Action khi user click vào link
 
   const details = payslip.details || {}
   const profile: any = profileData || {}
@@ -95,11 +104,6 @@ export default async function PayslipDetailPage({ params }: { params: { id: stri
             <p className="text-sm text-slate-500">Cập nhật lúc: {new Date(payslip.created_at).toLocaleString('vi-VN')}</p>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" className="bg-white" onClick={/* print would be client side, so ignoring for now or making a print wrapper */ undefined}>
-            <Printer className="h-4 w-4 mr-2" /> In phiếu
-          </Button>
-        </div>
       </div>
 
       <Card className="shadow-md border-slate-200">
@@ -131,7 +135,15 @@ export default async function PayslipDetailPage({ params }: { params: { id: stri
           <div>
             <h3 className="font-bold text-slate-800 mb-4 border-b pb-2">CHI TIẾT CÁC KHOẢN THU NHẬP & KHẤU TRỪ</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-2">
-              {Object.keys(details).filter(k => k.toLowerCase() !== 'họ và tên' && k.toLowerCase() !== 'stt' && k.toLowerCase() !== 'mã nv').map((key, index) => (
+              {Object.keys(details).filter(k => {
+                const clean = k.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "").toUpperCase();
+                return clean !== 'HOVATEN' && 
+                       clean !== 'HOTEN' &&
+                       clean !== 'STT' && 
+                       clean !== 'MANV' &&
+                       !clean.includes('THUCLANH') &&
+                       !clean.includes('QUATHEATM')
+              }).map((key, index) => (
                 <div key={index} className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
                   <span className="text-slate-600 text-sm">{key}</span>
                   <span className="font-semibold text-slate-800">{formatMoney(details[key])}</span>

@@ -11,8 +11,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { YearFilter } from './YearFilter'
 import { markAsRead } from './actions'
 import PayslipListClient from './PayslipListClient'
+
+export const dynamic = 'force-dynamic'
 
 // Hàm format tiền tệ (VND)
 const formatCurrency = (amount: number) => {
@@ -55,14 +58,20 @@ export default async function PayslipsPage({
   // Lấy thông tin user hiện tại để kiểm tra quyền
   const { data: profile } = await supabase
     .from('profiles')
-    .select('department, is_admin')
+    .select('department, is_admin, full_name, role')
     .eq('id', user?.id)
     .single()
 
-  const isHR = profile?.department?.toLowerCase().includes('tổ chức') || profile?.department?.toLowerCase().includes('kế hoạch')
-  const isAccountant = profile?.department?.toLowerCase().includes('kế toán')
+  const fullName = profile?.full_name?.toLowerCase() || ''
+  const roleName = profile?.role?.toLowerCase() || ''
+  const departmentName = profile?.department?.toLowerCase() || ''
+
+  const isChau = fullName.includes('nguyễn thị hồng châu') || fullName.includes('nguyễn thi hồng châu')
+  const isTuyet = fullName.includes('lê thị kim tuyết')
+  const isChiefAccountant = roleName.includes('kế toán trưởng') || (departmentName.includes('kế toán') && roleName.includes('trưởng'))
   const isAdmin = profile?.is_admin === true
-  const canUpload = isAdmin || isHR || isAccountant
+  
+  const canUpload = isAdmin || isChau || isTuyet || isChiefAccountant
 
   const supabaseAdmin = createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -93,9 +102,18 @@ export default async function PayslipsPage({
       
     if (profiles) {
       const profileMap = new Map(profiles.map(p => [p.id, p]))
+      
+      const { data: notifications } = await supabaseAdmin
+        .from('notifications')
+        .select('document_id, is_read')
+        .in('document_id', payslips.map(p => p.id))
+        
+      const notifMap = new Map((notifications || []).map(n => [n.document_id, n.is_read]))
+
       payslips = payslips.map(slip => ({
         ...slip,
-        profiles: profileMap.get(slip.user_id)
+        profiles: profileMap.get(slip.user_id),
+        status: notifMap.get(slip.id) ? 'Đã xem' : 'Chưa xem'
       }))
     }
   }
@@ -129,17 +147,7 @@ export default async function PayslipsPage({
           
           <div className="flex items-center gap-2">
             <span className="text-sm text-slate-600">Chọn năm:</span>
-            {/* Trong thực tế, việc filter sẽ cần client component router.push, ở đây dùng demo tĩnh */}
-            <Select defaultValue={selectedYear.toString()}>
-              <SelectTrigger className="w-[120px] bg-white">
-                <SelectValue placeholder="Chọn năm" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={(currentYear).toString()}>{currentYear}</SelectItem>
-                <SelectItem value={(currentYear - 1).toString()}>{currentYear - 1}</SelectItem>
-                <SelectItem value={(currentYear - 2).toString()}>{currentYear - 2}</SelectItem>
-              </SelectContent>
-            </Select>
+            <YearFilter currentYear={currentYear} selectedYear={selectedYear} />
           </div>
         </div>
         <div className="overflow-x-auto">
