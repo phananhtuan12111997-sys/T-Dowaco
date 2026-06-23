@@ -90,7 +90,7 @@ export default async function PayslipDetailPage({ params }: { params: { id: stri
     }
   }
 
-  const sections: { type: 'group' | 'standalone', name: string, items: { label: string, value: any }[] }[] = [];
+  const elements: { type: 'group' | 'standalone', name: string, items?: { label: string, value: any }[], value?: any }[] = [];
   let currentGroup: string | null = null;
   let currentItems: { label: string, value: any }[] = [];
 
@@ -114,29 +114,27 @@ export default async function PayslipDetailPage({ params }: { params: { id: stri
              currentItems.push({ label: child, value: details[key] });
          } else {
              if (currentItems.length > 0) {
-                 sections.push({ type: currentGroup === 'standalone' ? 'standalone' : 'group', name: currentGroup!, items: currentItems });
+                 elements.push({ type: 'group', name: currentGroup!, items: currentItems });
              }
              currentGroup = parent;
              currentItems = [{ label: child, value: details[key] }];
          }
      } else {
-         if (currentGroup === 'standalone') {
-             currentItems.push({ label: key, value: details[key] });
-         } else {
-             if (currentItems.length > 0) {
-                 sections.push({ type: 'group', name: currentGroup!, items: currentItems });
-             }
-             currentGroup = 'standalone';
-             currentItems = [{ label: key, value: details[key] }];
+         // Flush any pending group
+         if (currentItems.length > 0) {
+             elements.push({ type: 'group', name: currentGroup!, items: currentItems });
+             currentItems = [];
+             currentGroup = null;
          }
+         elements.push({ type: 'standalone', name: key, value: details[key] });
      }
   });
   if (currentItems.length > 0) {
-      sections.push({ type: currentGroup === 'standalone' ? 'standalone' : 'group', name: currentGroup!, items: currentItems });
+      elements.push({ type: 'group', name: currentGroup!, items: currentItems });
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button asChild variant="ghost" size="icon" className="h-8 w-8 rounded-full">
@@ -179,34 +177,45 @@ export default async function PayslipDetailPage({ params }: { params: { id: stri
 
           <div>
             <h3 className="font-bold text-slate-800 mb-6 border-b pb-2">CHI TIẾT CÁC KHOẢN THU NHẬP & KHẤU TRỪ</h3>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-              {sections.map((section, idx) => (
-                <div key={idx} className="border border-slate-200 rounded-lg shadow-sm overflow-hidden flex flex-col h-full bg-white">
-                  {section.type === 'group' && (
-                    <div className="bg-slate-100/80 px-4 py-3 border-b border-slate-200">
-                      <h4 className="font-semibold text-[#1a56db] uppercase text-sm tracking-wide">{section.name}</h4>
+            <div className="flex flex-col gap-4 items-stretch">
+              {elements.map((el, idx) => {
+                if (el.type === 'group') {
+                  return (
+                    <div key={idx} className="border border-slate-200 rounded-lg shadow-sm overflow-hidden flex flex-col bg-white">
+                      <div className="bg-slate-100/80 px-4 py-3 border-b border-slate-200">
+                        <h4 className="font-semibold text-[#1a56db] uppercase text-sm tracking-wide">{el.name}</h4>
+                      </div>
+                      <div className="p-0 flex flex-col">
+                        {el.items?.map((item, jdx) => {
+                          const valStr = formatMoney(item.value);
+                          const isZero = item.value === 0 || item.value === '0' || item.value === '-' || valStr === '0 ₫' || valStr === '0 ₫' || valStr === '-';
+                          const isHighlight = item.label.toUpperCase().includes('TỔNG');
+                          return (
+                            <div key={jdx} className={`flex justify-between items-center px-4 py-3 border-b border-slate-100 last:border-0 ${jdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}>
+                              <span className={`text-sm ${isZero ? 'text-slate-400' : 'text-slate-600'} w-3/5 pr-4 ${isHighlight ? 'font-semibold text-slate-800' : ''}`}>{item.label}</span>
+                              <span className={`text-right ${isZero ? 'text-slate-400 font-normal' : 'font-semibold text-slate-800'} ${isHighlight ? 'text-[#1a56db]' : ''}`}>{valStr}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
                     </div>
-                  )}
-                  {section.type === 'standalone' && (
-                    <div className="bg-slate-50 px-4 py-3 border-b border-slate-200">
-                      <h4 className="font-semibold text-slate-600 uppercase text-sm tracking-wide">CÁC KHOẢN CHI TIẾT KHÁC</h4>
+                  )
+                } else {
+                  // Standalone item
+                  const valStr = formatMoney(el.value);
+                  const isZero = el.value === 0 || el.value === '0' || el.value === '-' || valStr === '0 ₫' || valStr === '0 ₫' || valStr === '-';
+                  const isHighlight = el.name.toUpperCase().includes('TỔNG');
+                  
+                  return (
+                    <div key={idx} className="border border-slate-200 rounded-lg shadow-sm overflow-hidden bg-white">
+                      <div className={`flex justify-between items-center px-4 py-3`}>
+                        <span className={`text-sm font-semibold text-[#1a56db] uppercase tracking-wide w-3/5 pr-4`}>{el.name}</span>
+                        <span className={`text-right ${isZero ? 'text-slate-400 font-normal' : 'font-semibold text-slate-800'} ${isHighlight ? 'text-[#1a56db]' : ''}`}>{valStr}</span>
+                      </div>
                     </div>
-                  )}
-                  <div className="p-0 flex-1 flex flex-col">
-                    {section.items.map((item, jdx) => {
-                      const valStr = formatMoney(item.value);
-                      const isZero = item.value === 0 || item.value === '0' || item.value === '-' || valStr === '0 ₫' || valStr === '0 ₫' || valStr === '-';
-                      const isHighlight = item.label.toUpperCase().includes('TỔNG');
-                      return (
-                        <div key={jdx} className={`flex justify-between items-center px-4 py-3 border-b border-slate-100 last:border-0 ${jdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}>
-                          <span className={`text-sm ${isZero ? 'text-slate-400' : 'text-slate-600'} w-3/5 pr-4 ${isHighlight ? 'font-semibold text-slate-800' : ''}`}>{item.label}</span>
-                          <span className={`text-right ${isZero ? 'text-slate-400 font-normal' : 'font-semibold text-slate-800'} ${isHighlight ? 'text-[#1a56db]' : ''}`}>{valStr}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              ))}
+                  )
+                }
+              })}
             </div>
           </div>
 
