@@ -145,12 +145,15 @@ export default function BulkUploadPayslips() {
         
         const structuredData = rows.map(row => {
           const obj: RowData = {}
+          const headerOrder: string[] = []
           headers.forEach((header, index) => {
             if (header && typeof header === 'string' && header !== '') {
               const val = row[index]
               obj[header] = (val !== undefined && val !== null && val !== '') ? val : 0
+              headerOrder.push(header)
             }
           })
+          obj['_headersOrder'] = headerOrder
           return obj
         }).filter(row => {
           const nameKey = Object.keys(row).find(k => k.toUpperCase().includes('HỌ VÀ TÊN') || k.toUpperCase().includes('HỌ TÊN'))

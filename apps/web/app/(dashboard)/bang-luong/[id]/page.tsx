@@ -94,7 +94,10 @@ export default async function PayslipDetailPage({ params }: { params: { id: stri
   let currentGroup: string | null = null;
   let currentItems: { label: string, value: any }[] = [];
 
+  const orderArray: string[] = details['_headersOrder'] || [];
+  
   const keysToProcess = Object.keys(details).filter(k => {
+    if (k === '_headersOrder') return false;
     const clean = k.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "").toUpperCase();
     return clean !== 'HOVATEN' && 
            clean !== 'HOTEN' &&
@@ -103,6 +106,28 @@ export default async function PayslipDetailPage({ params }: { params: { id: stri
            !clean.includes('THUCLANH') &&
            !clean.includes('QUATHEATM')
   });
+
+  if (orderArray.length > 0) {
+    keysToProcess.sort((a, b) => {
+      let idxA = orderArray.indexOf(a);
+      let idxB = orderArray.indexOf(b);
+      // Fallback: if a sub-column was reformatted with " - " but the original array had it differently
+      if (idxA === -1 && a.includes(' - ')) {
+        const parent = a.split(' - ')[0] || '';
+        const matchIdx = orderArray.findIndex(h => h.startsWith(parent));
+        if (matchIdx !== -1) idxA = matchIdx;
+      }
+      if (idxB === -1 && b.includes(' - ')) {
+        const parent = b.split(' - ')[0] || '';
+        const matchIdx = orderArray.findIndex(h => h.startsWith(parent));
+        if (matchIdx !== -1) idxB = matchIdx;
+      }
+      
+      idxA = idxA !== -1 ? idxA : 9999;
+      idxB = idxB !== -1 ? idxB : 9999;
+      return idxA - idxB;
+    });
+  }
 
   keysToProcess.forEach(key => {
      if (key.includes(' - ')) {
