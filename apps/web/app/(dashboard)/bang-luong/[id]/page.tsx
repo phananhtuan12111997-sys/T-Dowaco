@@ -90,8 +90,53 @@ export default async function PayslipDetailPage({ params }: { params: { id: stri
     }
   }
 
+  const sections: { type: 'group' | 'standalone', name: string, items: { label: string, value: any }[] }[] = [];
+  let currentGroup: string | null = null;
+  let currentItems: { label: string, value: any }[] = [];
+
+  const keysToProcess = Object.keys(details).filter(k => {
+    const clean = k.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "").toUpperCase();
+    return clean !== 'HOVATEN' && 
+           clean !== 'HOTEN' &&
+           clean !== 'STT' && 
+           clean !== 'MANV' &&
+           !clean.includes('THUCLANH') &&
+           !clean.includes('QUATHEATM')
+  });
+
+  keysToProcess.forEach(key => {
+     if (key.includes(' - ')) {
+         const parts = key.split(' - ');
+         const parent = parts[0]?.trim() || '';
+         const child = parts.slice(1).join(' - ').trim();
+         
+         if (currentGroup === parent) {
+             currentItems.push({ label: child, value: details[key] });
+         } else {
+             if (currentItems.length > 0) {
+                 sections.push({ type: currentGroup === 'standalone' ? 'standalone' : 'group', name: currentGroup!, items: currentItems });
+             }
+             currentGroup = parent;
+             currentItems = [{ label: child, value: details[key] }];
+         }
+     } else {
+         if (currentGroup === 'standalone') {
+             currentItems.push({ label: key, value: details[key] });
+         } else {
+             if (currentItems.length > 0) {
+                 sections.push({ type: 'group', name: currentGroup!, items: currentItems });
+             }
+             currentGroup = 'standalone';
+             currentItems = [{ label: key, value: details[key] }];
+         }
+     }
+  });
+  if (currentItems.length > 0) {
+      sections.push({ type: currentGroup === 'standalone' ? 'standalone' : 'group', name: currentGroup!, items: currentItems });
+  }
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button asChild variant="ghost" size="icon" className="h-8 w-8 rounded-full">
@@ -121,7 +166,7 @@ export default async function PayslipDetailPage({ params }: { params: { id: stri
             </div>
           </div>
         </CardHeader>
-        <CardContent className="pt-6 space-y-6">
+        <CardContent className="pt-6 space-y-8">
           <div className="bg-emerald-50 rounded-lg p-6 border border-emerald-100 flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
               <h3 className="text-emerald-800 font-semibold text-lg">THỰC LÃNH CHUYỂN KHOẢN</h3>
@@ -133,20 +178,33 @@ export default async function PayslipDetailPage({ params }: { params: { id: stri
           </div>
 
           <div>
-            <h3 className="font-bold text-slate-800 mb-4 border-b pb-2">CHI TIẾT CÁC KHOẢN THU NHẬP & KHẤU TRỪ</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-2">
-              {Object.keys(details).filter(k => {
-                const clean = k.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "").toUpperCase();
-                return clean !== 'HOVATEN' && 
-                       clean !== 'HOTEN' &&
-                       clean !== 'STT' && 
-                       clean !== 'MANV' &&
-                       !clean.includes('THUCLANH') &&
-                       !clean.includes('QUATHEATM')
-              }).map((key, index) => (
-                <div key={index} className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
-                  <span className="text-slate-600 text-sm">{key}</span>
-                  <span className="font-semibold text-slate-800">{formatMoney(details[key])}</span>
+            <h3 className="font-bold text-slate-800 mb-6 border-b pb-2">CHI TIẾT CÁC KHOẢN THU NHẬP & KHẤU TRỪ</h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+              {sections.map((section, idx) => (
+                <div key={idx} className="border border-slate-200 rounded-lg shadow-sm overflow-hidden flex flex-col h-full bg-white">
+                  {section.type === 'group' && (
+                    <div className="bg-slate-100/80 px-4 py-3 border-b border-slate-200">
+                      <h4 className="font-semibold text-[#1a56db] uppercase text-sm tracking-wide">{section.name}</h4>
+                    </div>
+                  )}
+                  {section.type === 'standalone' && (
+                    <div className="bg-slate-50 px-4 py-3 border-b border-slate-200">
+                      <h4 className="font-semibold text-slate-600 uppercase text-sm tracking-wide">CÁC KHOẢN CHI TIẾT KHÁC</h4>
+                    </div>
+                  )}
+                  <div className="p-0 flex-1 flex flex-col">
+                    {section.items.map((item, jdx) => {
+                      const valStr = formatMoney(item.value);
+                      const isZero = item.value === 0 || item.value === '0' || item.value === '-' || valStr === '0 ₫' || valStr === '0 ₫' || valStr === '-';
+                      const isHighlight = item.label.toUpperCase().includes('TỔNG');
+                      return (
+                        <div key={jdx} className={`flex justify-between items-center px-4 py-3 border-b border-slate-100 last:border-0 ${jdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}>
+                          <span className={`text-sm ${isZero ? 'text-slate-400' : 'text-slate-600'} w-3/5 pr-4 ${isHighlight ? 'font-semibold text-slate-800' : ''}`}>{item.label}</span>
+                          <span className={`text-right ${isZero ? 'text-slate-400 font-normal' : 'font-semibold text-slate-800'} ${isHighlight ? 'text-[#1a56db]' : ''}`}>{valStr}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
               ))}
             </div>
